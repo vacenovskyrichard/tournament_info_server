@@ -1,8 +1,4 @@
-from dotenv import load_dotenv
 import os
-import redis
-
-load_dotenv()
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
