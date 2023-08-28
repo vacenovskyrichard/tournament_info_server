@@ -284,11 +284,11 @@ class Tournaments:
         #     self.get_pbt_data()
         # except:
         #     print("Something went wrong during scrapion of PBT.")
-        # try:
-        print("Getting data from Ladvi.")
-        self.get_ladvi_data()
-        # except:
-        # print("Something went wrong during scrapion of Ladvi.")
+        try:
+            print("Getting data from Ladvi.")
+            self.get_ladvi_data()
+        except:
+            print("Something went wrong during scrapion of Ladvi.")
         # try:
         #     print("Getting data from CVF.")
         #     self.get_cvf_data()
