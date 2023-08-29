@@ -22,3 +22,15 @@ class Tournament(db.Model):
 
     def __repr__(self):
         return f"{self.name}\nAreal: {self.areal}\n\n"
+
+
+def get_uuid():
+    return uuid4().hex
+
+
+class User(db.Model):
+    __tablename__ = "user"
+    __bind_key__ = "user_db"
+    id = db.Column(db.String(32), primary_key=True, unique=True, default=get_uuid)
+    email = db.Column(db.String(345), unique=True)
+    password = db.Column(db.Text, nullable=False)

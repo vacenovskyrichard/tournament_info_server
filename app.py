@@ -9,9 +9,9 @@ from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from datetime import date, datetime
 from datetime import datetime, timedelta, timezone
+from flask_bcrypt import Bcrypt
 
-
-from models import db, Tournament
+from models import db, Tournament, User
 from config import ApplicationConfig
 from flask_jwt_extended import (
     create_access_token,
@@ -29,6 +29,7 @@ db.init_app(app=app)
 CORS(app)
 
 ma = Marshmallow(app)
+bcrypt = Bcrypt(app)
 
 
 class TournamentSchema(ma.Schema):
@@ -79,13 +80,37 @@ def refresh_expiring_jwts(response):
 def create_token():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-    print(email, password)
-    if email != "admin" or password != "admin":
-        return {"msg": "Wrong email or password"}, 401
+
+    user = User.query.filter_by(email=email).first()
+
+    if user is None:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    if not bcrypt.check_password_hash(user.password, password):
+        return jsonify({"error": "Unauthorized"}), 401
 
     access_token = create_access_token(identity=email)
     response = {"access_token": access_token}
     return response
+
+
+@app.route("/register", methods=["POST"])
+def register_user():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    print(email, password)
+
+    user_exists = User.query.filter_by(email=email).first() is not None
+
+    if user_exists:
+        return jsonify({"error": "User already exists"}), 409
+
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+    new_user = User(email=email, password=hashed_password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    return email, 200
 
 
 @app.route("/logout", methods=["POST"])
@@ -93,17 +118,6 @@ def logout():
     response = jsonify({"msg": "logout successful"})
     unset_jwt_cookies(response)
     return response
-
-
-@app.route("/profile")
-@jwt_required()
-def my_profile():
-    response_body = {
-        "name": "Nagato",
-        "about": "Hello! I'm a full stack developer that loves python and javascript",
-    }
-
-    return response_body
 
 
 def add_to_database(tournament: Tournament):
@@ -209,6 +223,7 @@ def update_tournament(id):
 
 
 @app.route("/delete/<id>/", methods=["DELETE"])
+@jwt_required()
 def delete_tournament_by_id(id):
     tournament = Tournament.query.get(id)
     if tournament:
