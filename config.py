@@ -13,3 +13,11 @@ class ApplicationConfig:
     }
     JWT_SECRET_KEY = "please-remember-to-change-me"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    
+    # configuration of mail
+    MAIL_SERVER ='smtp.seznam.cz'
+    MAIL_PORT = 465
+    MAIL_USERNAME = 'jdem.hrat@email.cz'
+    MAIL_PASSWORD = 'vEZ@4dQJXSJmF!r'
+    MAIL_USE_TLS = False
+    MAIL_USE_SSL = True

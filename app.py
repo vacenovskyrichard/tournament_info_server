@@ -10,8 +10,8 @@ from flask_cors import CORS
 from datetime import date, datetime
 from datetime import datetime, timedelta, timezone
 from flask_bcrypt import Bcrypt
-
-from models import db, Tournament, User
+from flask_mail import Mail, Message
+from models import db, Tournament, User, get_uuid
 from config import ApplicationConfig
 from flask_jwt_extended import (
     create_access_token,
@@ -24,6 +24,7 @@ from flask_jwt_extended import (
 
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
+mail = Mail(app) # instantiate the mail class
 db.init_app(app=app)
 
 CORS(app)
@@ -76,8 +77,8 @@ def refresh_expiring_jwts(response):
         return response
 
 
-@app.route("/token", methods=["POST"])
-def create_token():
+@app.route("/login", methods=["POST"])
+def login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
 
@@ -94,11 +95,36 @@ def create_token():
     return response
 
 
+@app.route("/reset", methods=["POST"])
+def reset_password():
+    email = request.json.get("email", None)
+    subject = 'Reset hesla'
+    sender = 'jdem.hrat@email.cz'
+    print("email")
+    print(email)
+    print('docasne heslo')
+    tmp_password = get_uuid()[-10:]
+    print(tmp_password)
+    user = User.query.filter_by(email=email).first()
+
+    if user is None:
+        return jsonify({"error": "User with this email does not exist"}), 404
+    user.password =  bcrypt.generate_password_hash(tmp_password).decode("utf-8")
+    db.session.commit()
+    
+    msg = Message(
+                subject=subject,
+                sender =sender,
+                recipients = [email]
+               )
+    msg.body = 'Nové heslo je: ' + tmp_password
+    mail.send(msg)
+    return jsonify({"new_password": tmp_password}), 200
+
 @app.route("/register", methods=["POST"])
 def register_user():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-    print(email, password)
 
     user_exists = User.query.filter_by(email=email).first() is not None
 
