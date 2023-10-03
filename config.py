@@ -7,10 +7,7 @@ class ApplicationConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ECHO = True
 
-    SQLALCHEMY_DATABASE_URI = "postgresql://tournament_info_user:Q0y9BOwD4CBzcWZCPRc0Vv3NLzuDT2gO@dpg-cjmflmnjbvhs73b95di0-a.frankfurt-postgres.render.com/tournament_info"
-    SQLALCHEMY_BINDS = {
-        "user_db": "postgresql://bsrbjxco:B-Xeg9tVWu1GA6YQgqEcCUKYFCYx5dYZ@trumpet.db.elephantsql.com/bsrbjxco"
-    }
+    SQLALCHEMY_DATABASE_URI = "postgresql://azohcmaq:HQIK2v2P_qWrq7EJ09tGzrv4FhxPfi2k@trumpet.db.elephantsql.com/azohcmaq"
     JWT_SECRET_KEY = "please-remember-to-change-me"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
     

@@ -2,9 +2,7 @@ import json
 from flask import Flask, jsonify, request, abort, session
 import os
 from flask import Flask, render_template, request, url_for, redirect
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.sql import func
-from Tournaments import Tournaments, TournamentInfo
+from Tournaments import TournamentManagement, TournamentInfo
 from flask_marshmallow import Marshmallow
 from flask_cors import CORS
 from datetime import date, datetime
@@ -91,7 +89,7 @@ def login():
         return jsonify({"error": "Unauthorized"}), 401
 
     access_token = create_access_token(identity=email)
-    response = {"access_token": access_token}
+    response = {"access_token": access_token,'role': user.role}
     return response
 
 
@@ -130,7 +128,6 @@ def register_user():
 
     if user_exists:
         return jsonify({"error": "User already exists"}), 409
-
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
     new_user = User(email=email, password=hashed_password)
     db.session.add(new_user)
@@ -262,7 +259,7 @@ def delete_tournament_by_id(id):
 
 @app.route("/update", methods=["GET"])
 def update_database():
-    tournaments = Tournaments()
+    tournaments = TournamentManagement()
     found_tournaments = tournaments.run_all_scrapers()
     for tournament in found_tournaments:
         add_to_database(
@@ -309,3 +306,8 @@ def filter_results():
 
 if __name__ == "__main__":
     app.run(debug=True)
+    # tm = TournamentManagement()
+    # tm.run_all_scrapers()
+    # print(tm.tournament_list)
+
+    
