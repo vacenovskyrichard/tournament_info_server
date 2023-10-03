@@ -6,8 +6,9 @@ import time as tm
 import json
 import re
 from selenium.webdriver.common.action_chains import ActionChains
-from datetime import datetime, date
-
+from datetime import datetime, date, timedelta
+from CzechMonths import CzechMonths
+from Logger import CustomLogger,logging
 
 class TournamentInfo:
     name: str
@@ -23,21 +24,7 @@ class TournamentInfo:
     level: str
     link: str
 
-    def __init__(
-        self,
-        name,
-        tournament_date,
-        city,
-        areal,
-        capacity,
-        signed,
-        price,
-        start,
-        organizer,
-        category,
-        level,
-        link,
-    ):
+    def __init__(self, name,tournament_date, city,areal, capacity, signed, price, start, organizer, category, level, link):
         self.name = name
         self.tournament_date = tournament_date
         self.city = city
@@ -50,14 +37,16 @@ class TournamentInfo:
         self.category = category
         self.level = level
         self.link = link
-
-
-class Tournaments:
-    tournament_list: list()
-
-    def __init__(self) -> None:
+        
+class TournamentManagement():
+    tournament_list:list[TournamentInfo]
+    def __init__(self):
         self.tournament_list = []
-
+        cl = CustomLogger()
+        self.custom_log_manager = cl
+        self.logger = cl.logger
+        cl.info_message_only("\n=================================== New run (app initialization) ==================================\n")
+        
     def get_category_by_name(self, name):
         if name:
             name_lower = name.lower()
@@ -67,30 +56,35 @@ class Tournaments:
                 return "Muži"
             elif "zen" in name_lower or "žen" in name_lower:
                 return "Ženy"
+        self.logger.warning("Did not find category in tournament name.")
         return "Jiné"
 
     def open_chrome_with_url(self, url):
-        options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
-        driver = webdriver.Chrome(options=options)
-        driver.implicitly_wait(10)
-        driver.maximize_window()
-        driver.get(url)
-        return driver
-
+        try:
+            self.driver_options = webdriver.ChromeOptions()
+            self.driver_options.add_argument("--headless")
+            self.driver = webdriver.Chrome(options=self.driver_options)
+            self.driver.implicitly_wait(10)
+            self.driver.maximize_window()
+            self.driver.get(url)
+            return True
+        except:
+            self.logger.error("Open chrom with url failed.")
+            return False
+            
     def get_pbt_data(self):
         tournament_areal = "Prague Beach Team (Střešovice)"
         tournament_city = "Praha"
         url = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
-        driver = self.open_chrome_with_url(url)
-        main_content = driver.find_element(By.CLASS_NAME, "event-list-container")
+        self.open_chrome_with_url(url)
+        main_content = self.driver.find_element(By.CLASS_NAME, "event-list-container")
         tm.sleep(3)
         print("checkpoint 1")
         days = main_content.find_elements(By.CSS_SELECTOR, "ul.list-group")
         tm.sleep(3)
         print("checkpoint 2")
         for day in days:
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(self.driver, 10)
             tournament_overview = wait.until(
                 EC.presence_of_element_located((By.CLASS_NAME, "event-list-container"))
             )
@@ -116,7 +110,7 @@ class Tournaments:
             )
 
             day.click()
-            wait = WebDriverWait(driver, 10)
+            wait = WebDriverWait(self.driver, 10)
             tournament_detail = wait.until(
                 EC.presence_of_element_located((By.CLASS_NAME, "description"))
             )
@@ -132,7 +126,7 @@ class Tournaments:
             )
             price = max(price1, price2) * 2
 
-            driver.back()
+            self.driver.back()
 
             category = self.get_category_by_name(tournament_name)
 
@@ -157,90 +151,174 @@ class Tournaments:
                     link=link,
                 ).__dict__()
             )
-        driver.quit()
+        self.driver.quit()
 
     def get_ladvi_data(self):
         tournament_areal = "Beachklub Ládví"
         tournament_city = "Praha"
         url = "https://beachklubladvi.cz/beachvolejbal/beach-turnaje/"
-        driver = self.open_chrome_with_url(url)
-        tournament_table = driver.find_element(By.ID, "turnaj_flb_event_list")
-
-        number_of_tournaments = len(
-            tournament_table.find_elements(By.CLASS_NAME, "flb_event_list_item")
-        )
-        driver.quit()
+        
+        self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
+        
+        if not self.open_chrome_with_url(url):
+            return False
+        
+        try:
+            tournament_table = self.driver.find_element(By.ID, "turnaj_flb_event_list")
+        except:
+            self.logger.error("Table with tournaments was not found.")
+            return False
+        
+        try:
+            number_of_tournaments = len(tournament_table.find_elements(By.CLASS_NAME, "flb_event_list_item"))
+        except:
+            self.logger.error("Failed to get number of tournaments.")
+            return False
+        
+        if number_of_tournaments > 0:
+            self.custom_log_manager.info_message_only(f"Number of found tournaments: {number_of_tournaments}.\n")
+        else:
+            self.custom_log_manager.info_message_only(f"No turnaments in this areal.\n")
+            
+        self.driver.quit()
+        
         for tournament_id in range(number_of_tournaments):
-            driver = self.open_chrome_with_url(url)
-            tournament_table = driver.find_element(By.ID, "turnaj_flb_event_list")
-            details = tournament_table.find_elements(
-                By.CLASS_NAME, "flb_event_list_item_button_detail"
-            )[tournament_id].click()
+            self.custom_log_manager.info_message_only(f"Processing tournament {tournament_id+1}/{number_of_tournaments}")
+            
+            if not self.open_chrome_with_url(url):
+                continue    
+            
+            try:
+                tournament_table = self.driver.find_element(By.ID, "turnaj_flb_event_list")
+            except:
+                self.logger.error("Table with tournaments was not found.")
+                continue
+            
+            try:
+                tournament_table.find_elements(By.CLASS_NAME, "flb_event_list_item_button_detail")[tournament_id].click()
+            except:
+                self.logger.error("Failed to get tournament detail button.")
+                continue
+                
             tm.sleep(3)
 
-            wait = WebDriverWait(driver, 10)
-            new_content = wait.until(
-                EC.presence_of_element_located((By.CLASS_NAME, "flb_event_detail"))
-            )
+            try:
+                new_content = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "flb_event_detail")))
+            except:
+                self.logger.error("Failed to get tournament details.")
+                continue
+            try:
+                tournament_name = new_content.find_element(By.CLASS_NAME, "flb_event_name").text
+            except:
+                self.logger.error("Failed to get tournament name.")
+                continue
+            
+            self.custom_log_manager.info_message_only(f"Tournament name: {tournament_name}")
 
-            tournament_name = new_content.find_element(
-                By.CLASS_NAME, "flb_event_name"
-            ).text
+            try:
+                tournament_date_str, start = new_content.find_element(By.CLASS_NAME, "flb_event_start").text.split(" ")
+            except:
+                self.logger.error("Failed to get tournament date and start time.")
+                continue
 
-            tournament_date_str, start = new_content.find_element(
-                By.CLASS_NAME, "flb_event_start"
-            ).text.split(" ")
+            tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
 
-            date_format = "%d.%m.%Y"
+            try:
+                organizer = (new_content.find_element(By.CLASS_NAME, "flb_event_organiser")
+                                        .find_element(By.CLASS_NAME, "fullname").text)
+            except:
+                self.logger.error("Failed to get tournament organizer name.")
+                continue
 
-            if start[0] == "0":
-                start = start[1:]
+            try:
+                price = new_content.find_element(By.CLASS_NAME, "flb_event_price").text.split(",")[0]
 
-            tournament_date = datetime.strptime(tournament_date_str, date_format)
-            organizer = (
-                new_content.find_element(By.CLASS_NAME, "flb_event_organiser")
-                .find_element(By.CLASS_NAME, "fullname")
-                .text
-            )
-
-            price = new_content.find_element(
-                By.CLASS_NAME, "flb_event_price"
-            ).text.split(",")[0]
-
-            capacity, free = list(
-                map(
-                    int,
-                    re.findall(
-                        r"\d+",
-                        new_content.find_element(
-                            By.CLASS_NAME, "flb_event_places"
-                        ).text,
-                    ),
-                )
-            )
+                capacity, free = list(map(int,re.findall(r"\d+",new_content.find_element(By.CLASS_NAME, "flb_event_places").text,),))
+            except:
+                self.logger.error("Failed to get tournament price and capacity.")
+                continue
+            
             signed = int(capacity) - int(free)
 
-            link = driver.current_url
-
+            try:
+                link = self.driver.current_url
+            except:
+                self.logger.error("Failed to get tournament url.")
+                continue
+            
             category = self.get_category_by_name(tournament_name)
 
             self.tournament_list.append(
-                TournamentInfo(
-                    name=tournament_name,
-                    tournament_date=tournament_date,
-                    city=tournament_city,
-                    areal=tournament_areal,
-                    capacity=capacity,
-                    signed=signed,
-                    price=price,
-                    start=start,
-                    organizer=organizer,
-                    category=category,
-                    level="Hobby/Open",
-                    link=link,
-                )
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",link,)
             )
-            driver.quit()
+            self.driver.quit()
+            self.custom_log_manager.info_message_only('')
+        return True
+    
+    def get_michalek_data(self):
+        tournament_areal = "Prague Beach Team (Střešovice)"
+        tournament_city = "Praha"
+        url = "https://michalek-beach.rezervuju.cz/training?event_group_id=36"
+        self.custom_log_manager.log_delimiter()
+        self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
+        
+        if not self.open_chrome_with_url(url):
+            return False
+        
+        try:
+            tournament_elements = self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")
+        except:
+            self.logger.error("Failed to get tourmament elements.")
+            return False
+        number_of_tournaments:int = len(tournament_elements)
+        for tournament_id in range(number_of_tournaments):
+            self.custom_log_manager.info_message_only(f"Processing tournament {tournament_id+1}/{number_of_tournaments}")
+            if not self.open_chrome_with_url(url):
+                continue
+            
+            tournament_element = self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")[tournament_id]
+                
+            try:
+                tournament_name = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_name").text
+                self.custom_log_manager.info_message_only(f"Tournament name: {tournament_name}")
+                day,month,year = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_date").text.split(" ")
+                tournament_date_str = f"{day}{CzechMonths(month).to_number()}.{year}"
+                tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
+                capacity,signed = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_capacity_with_participations_count").text.split('/')
+
+            except:
+                self.logger.error("Failed to get info from main page.")
+                return False            
+            
+            # open detail of tournament
+            try:
+                self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")[tournament_id].find_element(By.CLASS_NAME,"sf_admin_action_detail").click() 
+                tm.sleep(3)
+                
+                detail_description = self.driver.find_element(By.CLASS_NAME,"event_perex").text.lower()
+
+                category = self.get_category_by_name(tournament_name)
+
+                price_match = re.search(r'startovné (\d+)', detail_description)
+                price = "0"
+                if price_match:
+                    price = price_match.group().split(" ")[1]
+
+                start_match = re.search(r'začátek (\d+:\d+)', detail_description)
+                start = "0"
+                if start_match:
+                    start = start_match.group().split(" ")[1]
+            except:
+                self.logger.error("Failed to get info after clicking tournament detail.")
+                
+            organizer = "Ondřej Michálek"
+            self.tournament_list.append(
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",url,)
+            )
+            self.driver.quit()
+            self.custom_log_manager.info_message_only('')
+            
+        return True
 
     def get_cvf_data(self):
         tournament_areal = "Beachklub Ládví"
@@ -251,7 +329,7 @@ class Tournaments:
         url_zeny = (
             "https://www.cvf.cz/beach/turnaje/?rok=2023&mesic=&kategorie=Ženy&slozka="
         )
-        driver = self.open_chrome_with_url(url_muzi)
+        self.open_chrome_with_url(url_muzi)
         tm.sleep(10)
         # tournament_table = driver.find_element(By.ID, "turnaj_flb_event_list")
 
@@ -279,21 +357,25 @@ class Tournaments:
         # driver.quit()
 
     def run_all_scrapers(self):
+        start_time = datetime.now().replace(microsecond=0)
+        self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} ----------------------------")
+   
         # try:
         #     print("Getting data from pbt.")
         #     self.get_pbt_data()
         # except:
         #     print("Something went wrong during scrapion of PBT.")
-        try:
-            print("Getting data from Ladvi.")
-            self.get_ladvi_data()
-        except:
-            print("Something went wrong during scrapion of Ladvi.")
         # try:
         #     print("Getting data from CVF.")
         #     self.get_cvf_data()
         # except:
         #     print("Something went wrong during scrapion of CVF.")
+        self.get_ladvi_data()
+        self.get_michalek_data()
+            
+        self.custom_log_manager.info_message_only("------------------------------------------- SUMMARY -------------------------------------------")            
+        self.custom_log_manager.info_message_only(f"---------------------------- Update finished at {datetime.now().replace(microsecond=0)} ----------------------------")            
+        self.custom_log_manager.info_message_only(f"--------------------------- Next update starts at {(start_time + timedelta(hours=1)).replace(microsecond=0)} --------------------------\n")            
 
         return self.tournament_list
 
