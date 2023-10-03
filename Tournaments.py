@@ -45,7 +45,6 @@ class TournamentManagement():
         cl = CustomLogger()
         self.custom_log_manager = cl
         self.logger = cl.logger
-        cl.info_message_only("\n=================================== New run (app initialization) ==================================\n")
         
     def get_category_by_name(self, name):
         if name:
@@ -214,7 +213,8 @@ class TournamentManagement():
                 continue
             
             self.custom_log_manager.info_message_only(f"Tournament name: {tournament_name}")
-
+            self.custom_log_manager.info_message_only('Scraping...')
+            
             try:
                 tournament_date_str, start = new_content.find_element(By.CLASS_NAME, "flb_event_start").text.split(" ")
             except:
@@ -252,6 +252,7 @@ class TournamentManagement():
                 TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",link,)
             )
             self.driver.quit()
+            self.custom_log_manager.info_message_only('Data scraped succesfuly!')
             self.custom_log_manager.info_message_only('')
         return True
     
@@ -265,22 +266,27 @@ class TournamentManagement():
         if not self.open_chrome_with_url(url):
             return False
         
+        # get tourmament elements
         try:
             tournament_elements = self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")
         except:
             self.logger.error("Failed to get tourmament elements.")
             return False
+        
         number_of_tournaments:int = len(tournament_elements)
+        
         for tournament_id in range(number_of_tournaments):
             self.custom_log_manager.info_message_only(f"Processing tournament {tournament_id+1}/{number_of_tournaments}")
+            
             if not self.open_chrome_with_url(url):
                 continue
             
-            tournament_element = self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")[tournament_id]
-                
+            # get information which is on main page                
             try:
+                tournament_element = self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")[tournament_id]
                 tournament_name = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_name").text
                 self.custom_log_manager.info_message_only(f"Tournament name: {tournament_name}")
+                self.custom_log_manager.info_message_only('Scraping...')
                 day,month,year = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_date").text.split(" ")
                 tournament_date_str = f"{day}{CzechMonths(month).to_number()}.{year}"
                 tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
@@ -288,7 +294,7 @@ class TournamentManagement():
 
             except:
                 self.logger.error("Failed to get info from main page.")
-                return False            
+                continue            
             
             # open detail of tournament
             try:
@@ -310,12 +316,14 @@ class TournamentManagement():
                     start = start_match.group().split(" ")[1]
             except:
                 self.logger.error("Failed to get info after clicking tournament detail.")
+                continue
                 
             organizer = "Ondřej Michálek"
             self.tournament_list.append(
                 TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",url,)
             )
             self.driver.quit()
+            self.custom_log_manager.info_message_only('Data scraped succesfuly!')
             self.custom_log_manager.info_message_only('')
             
         return True
@@ -358,7 +366,7 @@ class TournamentManagement():
 
     def run_all_scrapers(self):
         start_time = datetime.now().replace(microsecond=0)
-        self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} ----------------------------")
+        self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
    
         # try:
         #     print("Getting data from pbt.")
@@ -373,10 +381,11 @@ class TournamentManagement():
         self.get_ladvi_data()
         self.get_michalek_data()
             
-        self.custom_log_manager.info_message_only("------------------------------------------- SUMMARY -------------------------------------------")            
+        self.custom_log_manager.info_message_only("------------------------------------------- SUMMARY -------------------------------------------\n")
+        self.custom_log_manager.info_message_only("TBD\n") 
         self.custom_log_manager.info_message_only(f"---------------------------- Update finished at {datetime.now().replace(microsecond=0)} ----------------------------")            
-        self.custom_log_manager.info_message_only(f"--------------------------- Next update starts at {(start_time + timedelta(hours=1)).replace(microsecond=0)} --------------------------\n")            
-
+        # self.custom_log_manager.info_message_only(f"--------------------------- Next update starts at {(start_time + timedelta(hours=1)).replace(microsecond=0)} --------------------------\n")            
+        self.custom_log_manager.remove_all_handlers()
         return self.tournament_list
 
     def generate_json(self):

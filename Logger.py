@@ -47,3 +47,7 @@ class CustomLogger:
         
     def log_delimiter(self):
         self.info_message_only("---------------------------------------------------------------------")
+    
+    def remove_all_handlers(self):
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
