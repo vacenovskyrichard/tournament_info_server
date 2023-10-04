@@ -368,16 +368,8 @@ class TournamentManagement():
         start_time = datetime.now().replace(microsecond=0)
         self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
    
-        # try:
-        #     print("Getting data from pbt.")
-        #     self.get_pbt_data()
-        # except:
-        #     print("Something went wrong during scrapion of PBT.")
-        # try:
-        #     print("Getting data from CVF.")
-        #     self.get_cvf_data()
-        # except:
-        #     print("Something went wrong during scrapion of CVF.")
+        # self.get_pbt_data()
+        # self.get_cvf_data()
         self.get_ladvi_data()
         self.get_michalek_data()
             
