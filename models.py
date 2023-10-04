@@ -25,7 +25,7 @@ class Tournament(db.Model):
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'))
 
     # Define a relationship to the 'User' table
-    creator = db.relationship('user', back_populates='tournaments')
+    creator = db.relationship('User', back_populates='tournaments')
     def __repr__(self):
         return f"{self.name}\nAreal: {self.areal}\n\n"
 
@@ -39,6 +39,6 @@ class User(db.Model):
     email = db.Column(db.String(345), unique=True)
     password = db.Column(db.Text, nullable=False)
     role = db.Column(db.String(50),default="basic")
-    name = db.Column(db.String(345),default="")
-    surname = db.Column(db.String(345),default="")
-    tournaments = db.relationship('tournament', back_populates='creator')
+    name = db.Column(db.String(345),default="unknown")
+    surname = db.Column(db.String(345),default="unknown")
+    tournaments = db.relationship('Tournament', back_populates='creator')

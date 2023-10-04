@@ -79,7 +79,10 @@ def refresh_expiring_jwts(response):
 def login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-
+    print("email")
+    print(email)
+    print("password")
+    print(password)
     user = User.query.filter_by(email=email).first()
 
     if user is None:
@@ -90,7 +93,7 @@ def login():
 
     access_token = create_access_token(identity=email)
     response = {"access_token": access_token,'role': user.role}
-    return response
+    return response, 200
 
 
 @app.route("/reset", methods=["POST"])
