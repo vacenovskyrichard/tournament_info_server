@@ -47,6 +47,7 @@ class TournamentSchema(ma.Schema):
             "category",
             "level",
             "link",
+            "user_id"
         )
 
 
@@ -203,6 +204,7 @@ def add_tournament():
         category=new_tournament["category"],
         level=new_tournament["level"],
         link=new_tournament["link"],
+        user_id=new_tournament["user_id"]
     )
     if add_to_database(result):
         return tournament_schema.jsonify(result), 200
