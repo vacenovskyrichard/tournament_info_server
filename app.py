@@ -93,7 +93,7 @@ def login():
 
     access_token = create_access_token(identity=email)
     response = {"access_token": access_token,'role': user.role, 'user_id':user.id}
-    return response, 200
+    return jsonify(response), 200
 
 
 @app.route("/reset", methods=["POST"])
