@@ -92,7 +92,7 @@ def login():
         return jsonify({"error": "Unauthorized"}), 401
 
     access_token = create_access_token(identity=email)
-    response = {"access_token": access_token,'role': user.role}
+    response = {"access_token": access_token,'role': user.role, 'user_id':user.id}
     return response, 200
 
 
@@ -279,6 +279,7 @@ def update_database():
                 category=tournament.category,
                 level=tournament.level,
                 link=tournament.link,
+                user_id='1'
             )
         )
     all_tournaments = Tournament.query.all()
