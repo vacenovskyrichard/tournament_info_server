@@ -139,6 +139,39 @@ def register_user():
 
     return email, 200
 
+@app.route("/google_login", methods=["POST"])
+def google_login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+
+    print(email)
+    print(password)
+    
+    user_exists = User.query.filter_by(email=email).first() is not None
+
+    if user_exists:
+        user = User.query.filter_by(email=email).first()
+
+        if not bcrypt.check_password_hash(user.password, password):
+            return jsonify({"error": "Unauthorized"}), 401
+
+        access_token = create_access_token(identity=email)
+        response = {"access_token": access_token,'role': user.role, 'user_id':user.id}
+        return jsonify(response), 200    
+
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+    new_user = User(email=email, password=hashed_password)
+    db.session.add(new_user)
+    db.session.commit()
+
+    user = User.query.filter_by(email=email).first()
+
+    if not bcrypt.check_password_hash(user.password, password):
+        return jsonify({"error": "Unauthorized"}), 401
+
+    access_token = create_access_token(identity=email)
+    response = {"access_token": access_token,'role': user.role, 'user_id':user.id}
+    return jsonify(response), 200    
 
 @app.route("/logout", methods=["POST"])
 def logout():
