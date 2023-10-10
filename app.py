@@ -58,20 +58,21 @@ jwt = JWTManager(app)
 
 @app.after_request
 def refresh_expiring_jwts(response):
-    print(response)
     try:
         exp_timestamp = get_jwt()["exp"]
         now = datetime.now(timezone.utc)
         target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
+        print("============== target time / exp time ===============")
         print(target_timestamp, exp_timestamp)
         if target_timestamp > exp_timestamp:
             access_token = create_access_token(identity=get_jwt_identity())
+            print("============== new access token===============")
+            print("New access token sent.")
             response.headers['new_access_token'] = access_token
 
         return response
     except (RuntimeError, KeyError):
         # Case where there is not a valid JWT. Just return the original response
-        js = jsonify({"message":"Hello from jwt."})
         response.headers['new_access_token'] = None
         return response
 
@@ -218,18 +219,7 @@ def get_tournament_by_id(id):
     return tournament_schema.jsonify(tournament)
 
 @app.route("/post", methods=["POST"])
-@jwt_required()
 def add_tournament():
-    jwt_exp = get_jwt()["exp"]
-    print("jwt_exp")
-    print(jwt_exp)
-    return "",200
-    # user_id = get_jwt_identity()
-    # print(user_id)
-    
-    # if not User.query.filter_by(id = user_id).first():
-    #     return jsonify({"message":"Unauthorized"}), 401
-    
     new_tournament = request.get_json()
     result = Tournament(
         name=new_tournament["name"],
@@ -288,7 +278,6 @@ def update_tournament(id):
     return tournament_schema.jsonify(tournament_to_update)
 
 @app.route("/delete/<id>/", methods=["DELETE"])
-# @jwt_required()
 def delete_tournament_by_id(id):
     tournament = Tournament.query.get(id)
     if tournament:
