@@ -17,6 +17,8 @@ from flask_jwt_extended import (
     get_jwt_identity,
     unset_jwt_cookies,
     jwt_required,
+    verify_jwt_in_request,
+    set_access_cookies,
     JWTManager,
 )
 
@@ -29,7 +31,6 @@ CORS(app)
 
 ma = Marshmallow(app)
 bcrypt = Bcrypt(app)
-
 
 class TournamentSchema(ma.Schema):
     class Meta:
@@ -50,13 +51,10 @@ class TournamentSchema(ma.Schema):
             "user_id"
         )
 
-
 tournament_schema = TournamentSchema()
 tournaments_schema = TournamentSchema(many=True)
 
-
 jwt = JWTManager(app)
-
 
 @app.after_request
 def refresh_expiring_jwts(response):
@@ -66,13 +64,10 @@ def refresh_expiring_jwts(response):
         target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
         if target_timestamp > exp_timestamp:
             access_token = create_access_token(identity=get_jwt_identity())
-            data = response.get_json()
-            if type(data) is dict:
-                data["access_token"] = access_token
-                response.data = json.dumps(data)
+            set_access_cookies(response, access_token)
         return response
     except (RuntimeError, KeyError):
-        # Case where there is not a valid JWT. Just return the original respone
+        # Case where there is not a valid JWT. Just return the original response
         return response
 
 
@@ -80,10 +75,6 @@ def refresh_expiring_jwts(response):
 def login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-    print("email")
-    print(email)
-    print("password")
-    print(password)
     user = User.query.filter_by(email=email).first()
 
     if user is None:
@@ -92,10 +83,12 @@ def login():
     if not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Unauthorized"}), 401
 
-    access_token = create_access_token(identity=email)
-    response = {"access_token": access_token,'role': user.role, 'user_id':user.id}
+    response = jsonify({"msg": "login successful"})
+    access_token = create_access_token(identity=user.id)
+    set_access_cookies(response, access_token)
+    
+    response = {"access_token": access_token,'role': user.role}
     return jsonify(response), 200
-
 
 @app.route("/reset", methods=["POST"])
 def reset_password():
@@ -144,6 +137,7 @@ def google_login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
 
+    print("Google login")
     print(email)
     print(password)
     
@@ -155,8 +149,8 @@ def google_login():
         if not bcrypt.check_password_hash(user.password, password):
             return jsonify({"error": "Unauthorized"}), 401
 
-        access_token = create_access_token(identity=email)
-        response = {"access_token": access_token,'role': user.role, 'user_id':user.id}
+        access_token = create_access_token(identity=user.id)
+        response = {"access_token": access_token,'role': user.role}
         return jsonify(response), 200    
 
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
@@ -170,7 +164,7 @@ def google_login():
         return jsonify({"error": "Unauthorized"}), 401
 
     access_token = create_access_token(identity=email)
-    response = {"access_token": access_token,'role': user.role, 'user_id':user.id}
+    response = {"access_token": access_token,'role': user.role}
     return jsonify(response), 200    
 
 @app.route("/logout", methods=["POST"])
@@ -178,7 +172,6 @@ def logout():
     response = jsonify({"msg": "logout successful"})
     unset_jwt_cookies(response)
     return response
-
 
 def add_to_database(tournament: Tournament):
     date_format = "%Y-%m-%d"
@@ -208,19 +201,16 @@ def add_to_database(tournament: Tournament):
         return True
     return False
 
-
 @app.route("/get", methods=["GET"])
 def get_all_tournaments():
     all_tournaments = Tournament.query.all()
     results = tournaments_schema.dump(all_tournaments)
     return jsonify(results)
 
-
 @app.route("/get/<id>/", methods=["GET"])
 def get_tournament_by_id(id):
     tournament = Tournament.query.get(id)
     return tournament_schema.jsonify(tournament)
-
 
 @app.route("/post", methods=["POST"])
 def add_tournament():
@@ -242,7 +232,6 @@ def add_tournament():
     if add_to_database(result):
         return tournament_schema.jsonify(result), 200
     return "Tournament already in the database.", 404
-
 
 @app.route("/update/<id>/", methods=["PUT"])
 def update_tournament(id):
@@ -282,9 +271,8 @@ def update_tournament(id):
 
     return tournament_schema.jsonify(tournament_to_update)
 
-
 @app.route("/delete/<id>/", methods=["DELETE"])
-@jwt_required()
+# @jwt_required()
 def delete_tournament_by_id(id):
     tournament = Tournament.query.get(id)
     if tournament:
@@ -293,7 +281,6 @@ def delete_tournament_by_id(id):
         return tournament_schema.jsonify(tournament), 200
     else:
         return "", 404
-
 
 @app.route("/update", methods=["GET"])
 def update_database():
@@ -321,7 +308,6 @@ def update_database():
     results = tournaments_schema.dump(all_tournaments)
     return jsonify(results)
 
-
 @app.route("/filter", methods=["POST"])
 def filter_results():
     filters = request.get_json()
@@ -341,7 +327,6 @@ def filter_results():
 
     final_results = tournaments_schema.dump(results)
     return jsonify(final_results)
-
 
 if __name__ == "__main__":
     app.run(debug=True)
