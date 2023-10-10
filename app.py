@@ -91,7 +91,6 @@ def login():
 
     response = jsonify({"msg": "login successful"})
     access_token = create_access_token(identity=user.id)
-    set_access_cookies(response, access_token)
     
     response = {"access_token": access_token,'role': user.role}
     return jsonify(response), 200
@@ -199,8 +198,6 @@ def add_to_database(tournament: Tournament):
         )
         .all()
     )
-    print("found_tournament")
-    print(found_tournament)
     if not found_tournament:
         db.session.add(tournament)
         db.session.commit()
@@ -219,6 +216,7 @@ def get_tournament_by_id(id):
     return tournament_schema.jsonify(tournament)
 
 @app.route("/post", methods=["POST"])
+@jwt_required()
 def add_tournament():
     new_tournament = request.get_json()
     result = Tournament(
@@ -237,7 +235,7 @@ def add_tournament():
     )
     if add_to_database(result):
         return tournament_schema.jsonify(result), 200
-    return "Tournament already in the database.", 404
+    return {"message": "Tournament already in the database."}, 404
 
 @app.route("/update/<id>/", methods=["PUT"])
 def update_tournament(id):
