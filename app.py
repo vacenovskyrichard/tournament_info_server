@@ -92,7 +92,7 @@ def login():
     response = jsonify({"msg": "login successful"})
     access_token = create_access_token(identity=user.id)
     
-    response = {"access_token": access_token,'role': user.role}
+    response = {"access_token": access_token}
     return jsonify(response), 200
 
 @app.route("/reset", methods=["POST"])
@@ -125,13 +125,16 @@ def reset_password():
 def register_user():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
+    name = request.json.get("name", None)
+    surname = request.json.get("surname", None)
 
     user_exists = User.query.filter_by(email=email).first() is not None
 
     if user_exists:
         return jsonify({"error": "User already exists"}), 409
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-    new_user = User(email=email, password=hashed_password)
+    new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+
     db.session.add(new_user)
     db.session.commit()
 
@@ -141,10 +144,14 @@ def register_user():
 def google_login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
+    name = request.json.get("name", None)
+    surname = request.json.get("surname", None)
 
     print("Google login")
     print(email)
     print(password)
+    print(name)
+    print(surname)
     
     user_exists = User.query.filter_by(email=email).first() is not None
 
@@ -155,11 +162,11 @@ def google_login():
             return jsonify({"error": "Unauthorized"}), 401
 
         access_token = create_access_token(identity=user.id)
-        response = {"access_token": access_token,'role': user.role}
+        response = {"access_token": access_token}
         return jsonify(response), 200    
 
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-    new_user = User(email=email, password=hashed_password)
+    new_user = User(email=email, password=hashed_password,name=name,surname=surname)
     db.session.add(new_user)
     db.session.commit()
 
@@ -169,7 +176,7 @@ def google_login():
         return jsonify({"error": "Unauthorized"}), 401
 
     access_token = create_access_token(identity=email)
-    response = {"access_token": access_token,'role': user.role}
+    response = {"access_token": access_token}
     return jsonify(response), 200    
 
 @app.route("/logout", methods=["POST"])
@@ -330,6 +337,24 @@ def filter_results():
 
     final_results = tournaments_schema.dump(results)
     return jsonify(final_results)
+
+@app.route("/user_info", methods=["POST"])
+@jwt_required()
+def get_user_info():
+    user_id = request.json.get("user_id", None)
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+        
+    print("User:")
+    print(user.id)
+    print(user.name)
+    print(user.surname)
+    print(user.email)
+    print(user.role)
+    
+    response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
+    return jsonify(response), 200
 
 
 if __name__ == "__main__":
