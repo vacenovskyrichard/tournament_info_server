@@ -169,13 +169,8 @@ def google_login():
     new_user = User(email=email, password=hashed_password,name=name,surname=surname)
     db.session.add(new_user)
     db.session.commit()
-
-    user = User.query.filter_by(email=email).first()
-
-    if not bcrypt.check_password_hash(user.password, password):
-        return jsonify({"error": "Unauthorized"}), 401
-
-    access_token = create_access_token(identity=email)
+    
+    access_token = create_access_token(identity=new_user.id)
     response = {"access_token": access_token}
     return jsonify(response), 200    
 
@@ -223,7 +218,7 @@ def get_tournament_by_id(id):
     return tournament_schema.jsonify(tournament)
 
 @app.route("/post", methods=["POST"])
-@jwt_required()
+# @jwt_required()
 def add_tournament():
     new_tournament = request.get_json()
     result = Tournament(
