@@ -22,6 +22,7 @@ from flask_jwt_extended import (
     JWTManager,
 )
 
+
 app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
 mail = Mail(app) # instantiate the mail class
@@ -353,7 +354,7 @@ def get_user_info():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
     # tm = TournamentManagement()
     # tm.run_all_scrapers()
     # print(tm.tournament_list)
