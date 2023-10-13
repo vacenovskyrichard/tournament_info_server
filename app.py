@@ -11,6 +11,7 @@ from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
 from models import db, Tournament, User, get_uuid
 from config import ApplicationConfig
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask_jwt_extended import (
     create_access_token,
     get_jwt,
@@ -54,6 +55,7 @@ class TournamentSchema(ma.Schema):
 
 tournament_schema = TournamentSchema()
 tournaments_schema = TournamentSchema(many=True)
+scheduler = BackgroundScheduler()
 
 jwt = JWTManager(app)
 
@@ -351,6 +353,18 @@ def get_user_info():
     
     response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
     return jsonify(response), 200
+
+
+
+def my_task():
+    print("========================================")
+    print("Running your task!")
+
+# Define the job to run my_hourly_task every hour
+scheduler.add_job(my_task, 'interval', minutes=1)
+
+# Start the scheduler when the Flask app is started
+scheduler.start()
 
 
 if __name__ == "__main__":
