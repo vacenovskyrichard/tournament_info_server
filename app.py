@@ -356,15 +356,15 @@ def get_user_info():
 
 
 
-def my_task():
-    print("========================================")
-    print("Running your task!")
+# def my_task():
+#     print("========================================")
+#     print("Running your task!")
 
-# Define the job to run my_hourly_task every hour
-scheduler.add_job(my_task, 'interval', minutes=1)
+# # Define the job to run my_hourly_task every hour
+# scheduler.add_job(my_task, 'interval', minutes=1)
 
-# Start the scheduler when the Flask app is started
-scheduler.start()
+# # Start the scheduler when the Flask app is started
+# scheduler.start()
 
 
 if __name__ == "__main__":
