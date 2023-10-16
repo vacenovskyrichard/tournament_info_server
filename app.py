@@ -1,6 +1,7 @@
 import json
 from flask import Flask, jsonify, request, abort, session
 import os
+import math
 from flask import Flask, render_template, request, url_for, redirect
 from Tournaments import TournamentManagement, TournamentInfo
 from flask_marshmallow import Marshmallow
@@ -61,22 +62,21 @@ jwt = JWTManager(app)
 
 @app.after_request
 def refresh_expiring_jwts(response):
+    response.headers['new_access_token'] = "None"
+    response.headers['Access-Control-Expose-Headers'] = '*, Authorization, new_access_token'
     try:
         exp_timestamp = get_jwt()["exp"]
         now = datetime.now(timezone.utc)
-        target_timestamp = datetime.timestamp(now + timedelta(minutes=30))
-        print("============== target time / exp time ===============")
-        print(target_timestamp, exp_timestamp)
+        target_timestamp = datetime.timestamp(now + timedelta(minutes=15))
+        minutes = str(math.floor((exp_timestamp - target_timestamp)/60))
+        seconds = str(round(math.floor((exp_timestamp - target_timestamp)%60)))
+        print(f"Time to new access token generation: {minutes} min {seconds} sec.")
         if target_timestamp > exp_timestamp:
             access_token = create_access_token(identity=get_jwt_identity())
-            print("============== new access token===============")
-            print("New access token sent.")
             response.headers['new_access_token'] = access_token
-
         return response
     except (RuntimeError, KeyError):
         # Case where there is not a valid JWT. Just return the original response
-        response.headers['new_access_token'] = None
         return response
 
 
@@ -103,11 +103,7 @@ def reset_password():
     email = request.json.get("email", None)
     subject = 'Reset hesla'
     sender = 'jdem.hrat@email.cz'
-    print("email")
-    print(email)
-    print('docasne heslo')
     tmp_password = get_uuid()[-10:]
-    print(tmp_password)
     user = User.query.filter_by(email=email).first()
 
     if user is None:
@@ -150,12 +146,6 @@ def google_login():
     name = request.json.get("name", None)
     surname = request.json.get("surname", None)
 
-    print("Google login")
-    print(email)
-    print(password)
-    print(name)
-    print(surname)
-    
     user_exists = User.query.filter_by(email=email).first() is not None
 
     if user_exists:
@@ -281,6 +271,7 @@ def update_tournament(id):
     return tournament_schema.jsonify(tournament_to_update)
 
 @app.route("/delete/<id>/", methods=["DELETE"])
+@jwt_required()
 def delete_tournament_by_id(id):
     tournament = Tournament.query.get(id)
     if tournament:
@@ -326,7 +317,6 @@ def filter_results():
             continue
         filter_conditions.append((getattr(Tournament, f) == filters[f]))
 
-    print(filter_conditions)
     final_filter = db.and_(*filter_conditions)
 
     results = db.session.query(Tournament).filter(final_filter).all()
@@ -343,13 +333,6 @@ def get_user_info():
     user = User.query.filter_by(id=user_id).first()
     if not user:
         return jsonify({"error": "User not found."}), 404
-        
-    print("User:")
-    print(user.id)
-    print(user.name)
-    print(user.surname)
-    print(user.email)
-    print(user.role)
     
     response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
     return jsonify(response), 200

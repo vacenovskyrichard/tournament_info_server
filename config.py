@@ -10,7 +10,7 @@ class ApplicationConfig:
     SQLALCHEMY_DATABASE_URI = "postgresql://azohcmaq:HQIK2v2P_qWrq7EJ09tGzrv4FhxPfi2k@trumpet.db.elephantsql.com/azohcmaq"
     
     JWT_SECRET_KEY = "my-extremly-safe-secret-key-edwrqverfgafgvqewrfgqewrfgqwerfg"
-    JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
     JWT_COOKIE_SECURE = False
     
     # configuration of mail
