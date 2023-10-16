@@ -203,7 +203,8 @@ def add_to_database(tournament: Tournament):
 def get_all_tournaments():
     all_tournaments = Tournament.query.all()
     results = tournaments_schema.dump(all_tournaments)
-    return jsonify(results)
+    sorted_data = sorted(results, key=lambda x: x['date'])
+    return jsonify(sorted_data)
 
 @app.route("/get/<id>/", methods=["GET"])
 def get_tournament_by_id(id):
@@ -354,6 +355,6 @@ if __name__ == "__main__":
     app.run()
     # tm = TournamentManagement()
     # tm.run_all_scrapers()
-    # print(tm.tournament_list)
-
-    
+    # for tour in tm.tournament_list:
+    #     print(tour)
+    #     print()
