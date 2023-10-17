@@ -101,19 +101,19 @@ class TournamentManagement():
         return "Jiné"
 
     def open_chrome_with_url(self, url):
-        try:
-            self.driver_options = webdriver.ChromeOptions()
-            self.driver_options.add_argument("--headless")
-            self.driver_options.add_argument("--disable-dev-shm-usage")
-            self.driver_options.add_argument("--no-sandbox")
-            self.driver = webdriver.Chrome(options=self.driver_options)            
-            self.driver.implicitly_wait(10)
-            self.driver.maximize_window()
-            self.driver.get(url)
-            return True
-        except:
-            self.logger.error("Open chrom with url failed.")
-            return False
+        # try:
+        self.driver_options = webdriver.ChromeOptions()
+        self.driver_options.add_argument("--headless")
+        self.driver_options.add_argument("--disable-dev-shm-usage")
+        self.driver_options.add_argument("--no-sandbox")
+        self.driver = webdriver.Chrome(options=self.driver_options)            
+        self.driver.implicitly_wait(10)
+        self.driver.maximize_window()
+        self.driver.get(url)
+        return True
+        # except:
+        #     self.logger.error("Open chrom with url failed.")
+        #     return False
             
     def get_pbt_data(self,attempt):
         tournament_areal = "Prague Beach Team (Střešovice)"
