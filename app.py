@@ -385,9 +385,17 @@ def calendar_feed(city,areal,category,level):
     return Response(ics_feed, content_type='text/calendar; charset=utf-8')
 
 
-# run update every 30 minutes
-scheduler.add_job(update_database, 'interval', minutes=30)
-scheduler.start()
+def test():
+    print("Test print")
+    return
+
+if not scheduler.get_job('update_job'):
+    # Add the job to the scheduler with a specific ID ('update_job')
+    scheduler.add_job(test, 'interval', minutes=1, id='update_job')
+
+# Start the scheduler (if it's not already running)
+if not scheduler.running:
+    scheduler.start()
 
 if __name__ == "__main__":
     app.run()
