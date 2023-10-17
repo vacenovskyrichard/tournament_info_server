@@ -385,10 +385,6 @@ def calendar_feed(city,areal,category,level):
     return Response(ics_feed, content_type='text/calendar; charset=utf-8')
 
 
-# run update every 30 minutes
-scheduler.add_job(update_database, 'interval', minutes=30)
-scheduler.start()
-
 if __name__ == "__main__":
     app.run()
     # tm = TournamentManagement()
