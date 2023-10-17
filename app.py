@@ -389,13 +389,13 @@ def test():
     print("Test print")
     return
 
-if not scheduler.get_job('update_job'):
-    # Add the job to the scheduler with a specific ID ('update_job')
-    scheduler.add_job(test, 'interval', minutes=1, id='update_job')
+# if not scheduler.get_job('update_job'):
+#     # Add the job to the scheduler with a specific ID ('update_job')
+#     scheduler.add_job(test, 'interval', minutes=1, id='update_job')
 
-# Start the scheduler (if it's not already running)
-if not scheduler.running:
-    scheduler.start()
+# # Start the scheduler (if it's not already running)
+# if not scheduler.running:
+#     scheduler.start()
 
 if __name__ == "__main__":
     app.run()
