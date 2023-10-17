@@ -47,13 +47,12 @@ class TournamentInfo:
             
 class TournamentManagement():
     tournament_list:list[TournamentInfo]
+    driver: webdriver
     def __init__(self):
         self.tournament_list = []
         cl = CustomLogger()
         self.custom_log_manager = cl
         self.logger = cl.logger
-        
-        
         
     def get_css_selector(self, element):
         """Get the CSS selector for a WebElement."""
@@ -61,40 +60,34 @@ class TournamentManagement():
         selectors = []
 
         # Traverse the DOM from the target element to the top-level HTML element
-        attempts = 3
-        for i in range(attempts):
-            try:
-                while element.tag_name.lower() != 'html':
-                    element_index = self.get_element_index(element)
-                    element_tag = element.tag_name
-                    selectors.append(f"{element_tag}:nth-child({element_index})")
-                    element = element.find_element(By.XPATH, "..")
-
-                # Reverse the list of selectors and join them to form the full CSS selector
-                selectors.reverse()
-                css_selector = ' > '.join(selectors)
-            except:
-                self.logger.error(f"Attempt {i+1}/{attempts}: Failed to get css selector.")
-                if i == attempts -1:
+        try:
+            while element.tag_name.lower() != 'html':
+                element_index = self.get_element_index(element)
+                if element_index == -1:
                     return False,""
-                tm.sleep(1)
+                element_tag = element.tag_name
+                selectors.append(f"{element_tag}:nth-child({element_index})")
+                element = element.find_element(By.XPATH, "..")
+
+            # Reverse the list of selectors and join them to form the full CSS selector
+            selectors.reverse()
+            css_selector = ' > '.join(selectors)
+        except:
+            self.logger.error(f"Failed to get css selector.")
+            return False,""
 
         return True, css_selector
 
     def get_element_index(self,element):
-        attempts = 3
-        for i in range(attempts):
-            try:
-                parent = element.find_element(By.XPATH, "..")
-                children = parent.find_elements(By.XPATH, "./*")
-                index = children.index(element) + 1
-                return index
-            except:
-                self.logger.error(f"Attempt {i+1}/{attempts}: Failed to get element index.")
-                if i == attempts -1:
-                    return -1
-                tm.sleep(1)
-                
+        try:
+            parent = element.find_element(By.XPATH, "..")
+            children = parent.find_elements(By.XPATH, "./*")
+            index = children.index(element) + 1
+            return index
+        except:
+            self.logger.error(f"Failed to get element index.")
+            return -1                
+
     def get_category_by_name(self, name):
         if name:
             name_lower = name.lower()
@@ -111,7 +104,7 @@ class TournamentManagement():
         try:
             self.driver_options = webdriver.ChromeOptions()
             self.driver_options.add_argument("--headless")
-            self.driver = webdriver.Chrome(options=self.driver_options)
+            self.driver = webdriver.Chrome(options=self.driver_options)            
             self.driver.implicitly_wait(10)
             self.driver.maximize_window()
             self.driver.get(url)
@@ -120,7 +113,7 @@ class TournamentManagement():
             self.logger.error("Open chrom with url failed.")
             return False
             
-    def get_pbt_data(self):
+    def get_pbt_data(self,attempt):
         tournament_areal = "Prague Beach Team (Střešovice)"
         tournament_city = "Praha"
         url = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
@@ -130,36 +123,46 @@ class TournamentManagement():
         tournament_css_selectors = []
         if not self.open_chrome_with_url(url):
             return False
-        attempts : Final= 3
-        for i in range(attempts):
-            try:
-                main_content = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
-                days = main_content.find_elements(By.CSS_SELECTOR, "ul.list-group")
-                break
-            except:
-                self.logger.error(f"Attempt {i+1}/{attempts}: Failed to get main content.")
-                if i == attempts -1:
-                    return False
-                tm.sleep(1)
-            
+        
+        attempts : Final= 5
+        
+        try:
+            main_content = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
+            days = main_content.find_elements(By.CSS_SELECTOR, "ul.list-group")
+        except:
+            self.logger.error(f"Attempt {attempt}/{attempts}: Failed to get main content.")
+            if attempt >= attempts:
+                return False
+            self.driver.quit()
+            tm.sleep(10)
+            self.get_pbt_data(attempt+1)
+            return False
+                    
         # Get css selectors for each tournament
         for day in days:
-            for i in range(attempts):
-                try:
-                    tournaments_list = day.find_elements(By.TAG_NAME, "li")[1:]
-                    break
-                except:
-                    self.logger.error(f"Attempt {i+1}/{attempts}: Failed to get tournament list at specific day.")
-                    if i == attempts -1:
-                        return False
-                    tm.sleep(1)
-
-
+            try:
+                tournaments_list = day.find_elements(By.TAG_NAME, "li")[1:]
+            except:
+                self.logger.error(f"Attempt {attempt}/{attempts}: Failed to get tournament list at specific day.")
+                if attempt >= attempts:
+                    return False
+                self.driver.quit()
+                tm.sleep(10)
+                self.get_pbt_data(attempt+1)
+                return False
+        
             for tournament in tournaments_list:
                 success, css_selector = self.get_css_selector(tournament)
                 if success:
-                    tournament_css_selectors.append(css_selector)                                  
-    
+                    tournament_css_selectors.append(css_selector)
+                else:
+                    if attempt >= attempts:
+                        return False
+                    self.driver.quit()
+                    tm.sleep(10)
+                    self.get_pbt_data(attempt+1)
+                    return False                             
+        
         self.driver.quit()
         number_of_tournaments = len(tournament_css_selectors)
         # get data from tournaments
@@ -169,16 +172,17 @@ class TournamentManagement():
             if not self.open_chrome_with_url(url):
                 return False
             
-            for i in range(attempts):
-                try:
-                    tournament = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, tournament_css_selectors[index])))
-                    tournament.click()
-                    break
-                except:
-                    self.logger.error(f"Attempt {i+1}/{attempts}: Failed to get tournament by css selector.")
-                    if i == attempts -1:
-                        return False
-                    tm.sleep(1)
+            try:
+                tournament = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, tournament_css_selectors[index])))
+                tournament.click()
+            except:
+                self.logger.error(f"Attempt {attempt}/{attempts}: Failed to get tournament by css selector.")
+                if attempt > attempts:
+                    return False
+                self.driver.quit()
+                tm.sleep(10)
+                self.get_pbt_data(attempt+1)
+                return False
             
             try:
                 field_section = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".fieldsSection")))
@@ -431,7 +435,7 @@ class TournamentManagement():
         start_time = datetime.now().replace(microsecond=0)
         self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
    
-        self.get_pbt_data()
+        self.get_pbt_data(1)
         # self.get_cvf_data()
         self.get_ladvi_data()
         self.get_michalek_data()

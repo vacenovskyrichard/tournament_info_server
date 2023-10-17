@@ -192,14 +192,17 @@ def add_to_database(tournament: Tournament):
                 ),
             )
         )
-        .all()
+        .first()
     )
-    if not found_tournament:
+    
+    if found_tournament:
+        # Update the capacity and signed fields if the tournament is found
+        found_tournament.capacity = tournament.capacity
+        found_tournament.signed = tournament.signed
+    else:
         db.session.add(tournament)
-        db.session.commit()
-        return True
-    return False
-
+    db.session.commit()
+    
 @app.route("/get", methods=["GET"])
 def get_all_tournaments():
     all_tournaments = Tournament.query.all()
