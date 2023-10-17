@@ -319,7 +319,7 @@ def filter_results():
             continue
         filter_conditions.append((getattr(Tournament, f) == filters[f]))
 
-    final_filter = db.and_(*filter_conditions)
+    final_filter = db.and_(True, *filter_conditions)
 
     results = db.session.query(Tournament).filter(final_filter).all()
     if not results:
@@ -339,31 +339,47 @@ def get_user_info():
     response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
     return jsonify(response), 200
 
+@app.route('/calendar-feed.ics/<city>/<areal>/<category>/<level>/', methods=["GET"])
+def calendar_feed(city,areal,category,level):
+    filter_conditions = []
+    if city != "none":
+        filter_conditions.append((getattr(Tournament, "city") == city))
+    if areal != "none":
+        filter_conditions.append((getattr(Tournament, "areal") == areal))
+    if category != "none":
+        filter_conditions.append((getattr(Tournament, "category") == category))
+    if level != "none":
+        filter_conditions.append((getattr(Tournament, "level") == level))
 
-def generate_ics_feed():
-    # Create a new iCalendar (ICS) feed
+    final_filter = db.and_(True, *filter_conditions)
+
+    results = db.session.query(Tournament).filter(final_filter).all()
+    if not results:
+        return "", 404
+
     c = Calendar()
-
-    # Create an event
-    event = Event()
-    event.name = "Sample Event"
-    event.begin = "2023-10-17 10:00:00"
-    event.end = "2023-10-17 12:00:00"
-    event.description = "This is a sample event description."
-    event.location = "Sample Location"
     
-    # Add the event to the calendar
-    c.events.add(event)
+    for res in results:
+        start_str = str(res.date) + "-" + res.start
+        date_format = "%Y-%m-%d-%H:%M"
+        tournament_duration = timedelta(hours=8) if int(res.start.split(":")[0]) < 11 else timedelta(hours=4)
+        
+        start_time = datetime.strptime(start_str, date_format)
+        event = Event()
+        event.name = res.name
+        event.begin = start_time
+        # event.begin = "2023-10-17 10:00:00"
+        event.duration = tournament_duration
+        # event.end = "2023-10-17 12:00:00"
+        event.description = f"Kategorie: {res.category}\nCena:{res.price}\nPřihlášení: {res.signed}/{res.capacity}\nOrganizátor: {res.organizer}\n"
+        event.location = res.city + " " + res.areal    
+        event.url = res.link    
+        # Add the event to the calendar
+        c.events.add(event)    
+    
 
     # Generate the ICS feed
     ics_feed = c.serialize()
-
-    return ics_feed
-
-@app.route('/calendar-feed.ics')
-def calendar_feed():
-    # Generate and return the ICS feed
-    ics_feed = generate_ics_feed()
     return Response(ics_feed, content_type='text/calendar; charset=utf-8')
 
 
