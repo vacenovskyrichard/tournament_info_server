@@ -9,3 +9,4 @@ Flask-JWT-Extended
 psycopg2-binary
 gunicorn
 APScheduler
+ics

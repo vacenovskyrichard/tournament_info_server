@@ -1,5 +1,5 @@
 import json
-from flask import Flask, jsonify, request, abort, session
+from flask import Flask, jsonify, request, abort, session, Response
 import os
 import math
 from flask import Flask, render_template, request, url_for, redirect
@@ -13,6 +13,7 @@ from flask_mail import Mail, Message
 from models import db, Tournament, User, get_uuid
 from config import ApplicationConfig
 from apscheduler.schedulers.background import BackgroundScheduler
+from ics import Calendar, Event
 from flask_jwt_extended import (
     create_access_token,
     get_jwt,
@@ -338,6 +339,32 @@ def get_user_info():
     response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
     return jsonify(response), 200
 
+
+def generate_ics_feed():
+    # Create a new iCalendar (ICS) feed
+    c = Calendar()
+
+    # Create an event
+    event = Event()
+    event.name = "Sample Event"
+    event.begin = "2023-10-17 10:00:00"
+    event.end = "2023-10-17 12:00:00"
+    event.description = "This is a sample event description."
+    event.location = "Sample Location"
+    
+    # Add the event to the calendar
+    c.events.add(event)
+
+    # Generate the ICS feed
+    ics_feed = c.serialize()
+
+    return ics_feed
+
+@app.route('/calendar-feed.ics')
+def calendar_feed():
+    # Generate and return the ICS feed
+    ics_feed = generate_ics_feed()
+    return Response(ics_feed, content_type='text/calendar; charset=utf-8')
 
 
 # def my_task():
