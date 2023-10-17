@@ -10,6 +10,10 @@ from datetime import datetime, date, timedelta
 from CzechMonths import CzechMonths
 from Logger import CustomLogger,logging
 from typing import Final
+import os
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+
 
 
 class TournamentInfo:
@@ -102,12 +106,13 @@ class TournamentManagement():
 
     def open_chrome_with_url(self, url):
         # try:
-        self.driver_options = webdriver.ChromeOptions()
-        self.driver_options.add_argument("--headless")
-        self.driver_options.add_argument("--disable-dev-shm-usage")
-        self.driver_options.add_argument("--no-sandbox")
-        self.driver_options.binary_location = '/usr/bin/google-chrome'
-        self.driver = webdriver.Chrome(options=self.driver_options)            
+        service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
+        chrome_options = webdriver.ChromeOptions()
+        chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+        chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--no-sandbox")
+        self.driver = webdriver.Chrome(service=service, options=chrome_options)
         self.driver.implicitly_wait(10)
         self.driver.maximize_window()
         self.driver.get(url)
