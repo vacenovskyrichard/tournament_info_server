@@ -384,11 +384,10 @@ def calendar_feed(city,areal,category,level):
     ics_feed = c.serialize()
     return Response(ics_feed, content_type='text/calendar; charset=utf-8')
 
-
 if __name__ == "__main__":
     app.run()
-    # tm = TournamentManagement()
-    # tm.run_all_scrapers()
-    # for tour in tm.tournament_list:
-    #     print(tour)
-    #     print()
+#     # tm = TournamentManagement()
+#     # tm.run_all_scrapers()
+#     # for tour in tm.tournament_list:
+#     #     print(tour)
+#     #     print()

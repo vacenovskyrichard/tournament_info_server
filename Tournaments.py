@@ -10,6 +10,10 @@ from datetime import datetime, date, timedelta
 from CzechMonths import CzechMonths
 from Logger import CustomLogger,logging
 from typing import Final
+import os
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+
 
 
 class TournamentInfo:
@@ -102,9 +106,13 @@ class TournamentManagement():
 
     def open_chrome_with_url(self, url):
         try:
-            self.driver_options = webdriver.ChromeOptions()
-            self.driver_options.add_argument("--headless")
-            self.driver = webdriver.Chrome(options=self.driver_options)            
+            service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
+            chrome_options = webdriver.ChromeOptions()
+            chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+            chrome_options.add_argument("--headless")
+            chrome_options.add_argument("--disable-dev-shm-usage")
+            chrome_options.add_argument("--no-sandbox")
+            self.driver = webdriver.Chrome(service=service, options=chrome_options)
             self.driver.implicitly_wait(10)
             self.driver.maximize_window()
             self.driver.get(url)
@@ -117,25 +125,23 @@ class TournamentManagement():
         tournament_areal = "Prague Beach Team (Střešovice)"
         tournament_city = "Praha"
         url = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
-        self.custom_log_manager.log_delimiter()
-        self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
+        
+        if attempt == 1:
+            self.custom_log_manager.log_delimiter()
+            self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
         
         tournament_css_selectors = []
         if not self.open_chrome_with_url(url):
             return False
         
-        attempts : Final= 5
-        
         try:
             main_content = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
             days = main_content.find_elements(By.CSS_SELECTOR, "ul.list-group")
         except:
-            self.logger.error(f"Attempt {attempt}/{attempts}: Failed to get main content.")
-            if attempt >= attempts:
-                return False
+            self.logger.error(f"Failed to get main content.")
+            self.driver.save_screenshot("./Error.jpg")
             self.driver.quit()
             tm.sleep(10)
-            self.get_pbt_data(attempt+1)
             return False
                     
         # Get css selectors for each tournament
@@ -143,12 +149,10 @@ class TournamentManagement():
             try:
                 tournaments_list = day.find_elements(By.TAG_NAME, "li")[1:]
             except:
-                self.logger.error(f"Attempt {attempt}/{attempts}: Failed to get tournament list at specific day.")
-                if attempt >= attempts:
-                    return False
+                self.logger.error(f"Failed to get tournament list at specific day.")
+                self.driver.save_screenshot("./Error.jpg")
                 self.driver.quit()
                 tm.sleep(10)
-                self.get_pbt_data(attempt+1)
                 return False
         
             for tournament in tournaments_list:
@@ -156,15 +160,15 @@ class TournamentManagement():
                 if success:
                     tournament_css_selectors.append(css_selector)
                 else:
-                    if attempt >= attempts:
-                        return False
+                    self.driver.save_screenshot("./Error.jpg")
                     self.driver.quit()
                     tm.sleep(10)
-                    self.get_pbt_data(attempt+1)
                     return False                             
         
         self.driver.quit()
         number_of_tournaments = len(tournament_css_selectors)
+        print("tournament_css_selectors")
+        print(tournament_css_selectors)
         # get data from tournaments
         for index in range(number_of_tournaments):
             self.custom_log_manager.info_message_only(f"   Processing tournament {index+1}/{number_of_tournaments}")
@@ -176,12 +180,10 @@ class TournamentManagement():
                 tournament = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, tournament_css_selectors[index])))
                 tournament.click()
             except:
-                self.logger.error(f"Attempt {attempt}/{attempts}: Failed to get tournament by css selector.")
-                if attempt > attempts:
-                    return False
+                self.logger.error(f"Failed to get tournament by css selector.")
+                self.driver.save_screenshot("./Error.jpg")
                 self.driver.quit()
                 tm.sleep(10)
-                self.get_pbt_data(attempt+1)
                 return False
             
             try:
@@ -189,13 +191,20 @@ class TournamentManagement():
                 details = field_section.find_elements(By.CLASS_NAME,"value")
             except:
                 self.logger.error("Failed to get tournament detail.")
-                continue
+                self.driver.save_screenshot("./Error.jpg")
+                self.driver.quit()
+                tm.sleep(10)
+                return False
             try:
                 tournament_name = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.title"))).text
                 signed, capacity = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.capacity  "))).text.split('/')
             except:
                 self.logger.error("Failed to get tournament name and capacity.")
-                continue
+                self.driver.save_screenshot("./Error.jpg")
+                self.driver.quit()
+                tm.sleep(10)
+                return False
+            
             link = "https://www.praguebeachteam.cz/?menu=open-turnaje"
             category = self.get_category_by_name(details[0].text)
             organizer = details[1].text.split(",")[0]
@@ -435,7 +444,9 @@ class TournamentManagement():
         start_time = datetime.now().replace(microsecond=0)
         self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
    
-        self.get_pbt_data(1)
+        for attempt in range(5):
+            if self.get_pbt_data(attempt):
+                break 
         # self.get_cvf_data()
         self.get_ladvi_data()
         self.get_michalek_data()
