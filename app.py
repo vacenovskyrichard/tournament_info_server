@@ -380,22 +380,14 @@ def calendar_feed(city,areal,category,level):
         # Add the event to the calendar
         c.events.add(event)    
     
-
     # Generate the ICS feed
     ics_feed = c.serialize()
     return Response(ics_feed, content_type='text/calendar; charset=utf-8')
 
 
-# def my_task():
-#     print("========================================")
-#     print("Running your task!")
-
-# # Define the job to run my_hourly_task every hour
-# scheduler.add_job(my_task, 'interval', minutes=1)
-
-# # Start the scheduler when the Flask app is started
-# scheduler.start()
-
+# run update every 30 minutes
+scheduler.add_job(update_database, 'interval', minutes=30)
+scheduler.start()
 
 if __name__ == "__main__":
     app.run()
