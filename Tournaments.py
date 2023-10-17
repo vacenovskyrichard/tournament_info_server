@@ -106,6 +106,7 @@ class TournamentManagement():
         self.driver_options.add_argument("--headless")
         self.driver_options.add_argument("--disable-dev-shm-usage")
         self.driver_options.add_argument("--no-sandbox")
+        self.driver_options.binary_location = '/usr/bin/google-chrome'
         self.driver = webdriver.Chrome(options=self.driver_options)            
         self.driver.implicitly_wait(10)
         self.driver.maximize_window()

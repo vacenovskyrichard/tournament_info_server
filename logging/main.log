@@ -1,0 +1,347 @@
+---------------------------- New update started at 2023-10-17 17:19:51 -------------------------
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice).
+
+2023-10-17 17:19:53,143 - ERROR - Attempt 1/5: Failed to get tournament list at specific day.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice).
+
+   Processing tournament 1/3
+   Scraping...
+2023-10-17 17:20:07,106 - ERROR - Attempt 2/5: Failed to get tournament by css selector.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice).
+
+   Processing tournament 1/3
+   Scraping...
+2023-10-17 17:20:21,055 - ERROR - Attempt 3/5: Failed to get tournament by css selector.
+---------------------------- New update started at 2023-10-17 17:28:57 -------------------------
+   Processing tournament 1/3
+   Scraping...
+2023-10-17 17:29:01,700 - ERROR - Failed to get tournament by css selector.
+---------------------------------------------------------------------
+
+Areal: Beachklub Ládví.
+
+2023-10-17 17:29:18,520 - ERROR - Open chrom with url failed.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice) - Ondra Michálek.
+
+   Processing tournament 1/4
+   Scraping...
+2023-10-17 17:29:19,745 - ERROR - Open chrom with url failed.
+   Processing tournament 2/4
+   Scraping...
+2023-10-17 17:29:20,000 - ERROR - Open chrom with url failed.
+   Processing tournament 3/4
+   Scraping...
+2023-10-17 17:29:20,400 - ERROR - Open chrom with url failed.
+   Processing tournament 4/4
+   Scraping...
+2023-10-17 17:29:20,768 - ERROR - Open chrom with url failed.
+------------------------------------------- SUMMARY -------------------------------------------
+
+TBD
+
+---------------------------- Update finished at 2023-10-17 17:29:20 ----------------------------
+---------------------------- New update started at 2023-10-17 17:30:42 -------------------------
+2023-10-17 17:30:43,821 - ERROR - Failed to get css selector.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice).
+
+   Processing tournament 1/3
+   Scraping...
+2023-10-17 17:30:57,912 - ERROR - Failed to get tournament by css selector.
+---------------------------- New update started at 2023-10-17 17:35:02 -------------------------
+   Processing tournament 1/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/3
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Beachklub Ládví.
+
+2023-10-17 17:35:12,559 - ERROR - Open chrom with url failed.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice) - Ondra Michálek.
+
+2023-10-17 17:35:12,719 - ERROR - Open chrom with url failed.
+------------------------------------------- SUMMARY -------------------------------------------
+
+TBD
+
+---------------------------- Update finished at 2023-10-17 17:35:12 ----------------------------
+---------------------------- New update started at 2023-10-17 17:35:14 -------------------------
+   Processing tournament 1/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/3
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Beachklub Ládví.
+
+   Number of found tournaments: 1.
+
+   Processing tournament 1/1
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice) - Ondra Michálek.
+
+   Processing tournament 1/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 4/4
+   Scraping...
+   Data scraped succesfuly!
+
+------------------------------------------- SUMMARY -------------------------------------------
+
+TBD
+
+---------------------------- Update finished at 2023-10-17 17:35:40 ----------------------------
+---------------------------- New update started at 2023-10-17 17:38:27 -------------------------
+2023-10-17 17:38:29,243 - ERROR - Failed to get css selector.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice).
+
+2023-10-17 17:38:41,125 - ERROR - Failed to get element index.
+   Processing tournament 1/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/3
+   Scraping...
+2023-10-17 17:38:57,460 - ERROR - Failed to get tournament by css selector.
+2023-10-17 17:39:09,200 - ERROR - Failed to get css selector.
+   Processing tournament 1/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/3
+   Scraping...
+2023-10-17 17:39:25,572 - ERROR - Failed to get tournament by css selector.
+---------------------------------------------------------------------
+
+Areal: Beachklub Ládví.
+
+   Number of found tournaments: 1.
+
+   Processing tournament 1/1
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice) - Ondra Michálek.
+
+   Processing tournament 1/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 4/4
+   Scraping...
+   Data scraped succesfuly!
+
+------------------------------------------- SUMMARY -------------------------------------------
+
+TBD
+
+---------------------------- Update finished at 2023-10-17 17:39:55 ----------------------------
+---------------------------- New update started at 2023-10-17 17:43:34 -------------------------
+   Processing tournament 1/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/3
+   Scraping...
+2023-10-17 17:43:40,648 - ERROR - Failed to get tournament by css selector.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice).
+
+2023-10-17 17:43:52,533 - ERROR - Failed to get css selector.
+   Processing tournament 1/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/3
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Beachklub Ládví.
+
+   Number of found tournaments: 1.
+
+   Processing tournament 1/1
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice) - Ondra Michálek.
+
+   Processing tournament 1/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 4/4
+   Scraping...
+   Data scraped succesfuly!
+
+------------------------------------------- SUMMARY -------------------------------------------
+
+TBD
+
+---------------------------- Update finished at 2023-10-17 17:44:28 ----------------------------
+---------------------------- New update started at 2023-10-17 17:48:32 -------------------------
+   Processing tournament 1/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/3
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/3
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Beachklub Ládví.
+
+   Number of found tournaments: 1.
+
+   Processing tournament 1/1
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice) - Ondra Michálek.
+
+   Processing tournament 1/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 4/4
+   Scraping...
+   Data scraped succesfuly!
+
+------------------------------------------- SUMMARY -------------------------------------------
+
+TBD
+
+---------------------------- Update finished at 2023-10-17 17:49:01 ----------------------------
+---------------------------- New update started at 2023-10-17 18:39:49 -------------------------
+---------------------------- New update started at 2023-10-17 18:40:03 -------------------------
+---------------------------- New update started at 2023-10-17 18:44:34 -------------------------
+2023-10-17 18:44:37,221 - ERROR - Failed to get css selector.
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice).
+
+2023-10-17 18:44:49,342 - ERROR - Failed to get element index.
+2023-10-17 18:45:01,293 - ERROR - Failed to get element index.
+2023-10-17 18:45:15,360 - ERROR - Failed to get css selector.
+2023-10-17 18:45:27,466 - ERROR - Failed to get css selector.
+---------------------------------------------------------------------
+
+Areal: Beachklub Ládví.
+
+   Number of found tournaments: 1.
+
+   Processing tournament 1/1
+   Scraping...
+   Data scraped succesfuly!
+
+---------------------------------------------------------------------
+
+Areal: Prague Beach Team (Střešovice) - Ondra Michálek.
+
+   Processing tournament 1/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 2/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 3/4
+   Scraping...
+   Data scraped succesfuly!
+
+   Processing tournament 4/4
+   Scraping...
+   Data scraped succesfuly!
+
+------------------------------------------- SUMMARY -------------------------------------------
+
+TBD
+
+---------------------------- Update finished at 2023-10-17 18:46:00 ----------------------------
