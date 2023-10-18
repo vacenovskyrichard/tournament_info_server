@@ -71,7 +71,7 @@ class TournamentManagement():
         return "Jiné"
 
     def open_chrome_with_url(self, url):
-        testing = True
+        testing = False
         try:
             if not testing:
                 service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
