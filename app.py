@@ -342,7 +342,7 @@ def get_user_info():
     response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
     return jsonify(response), 200
 
-@app.route('/calendar-feed.ics/<city>/<areal>/<category>/<level>/', methods=["GET"])
+@app.route('/ical.feed/<city>/<areal>/<category>/<level>/', methods=["GET"])
 def calendar_feed(city,areal,category,level):
     filter_conditions = []
     if city != "none":
@@ -379,8 +379,15 @@ def calendar_feed(city,areal,category,level):
         c.events.add(event)    
     
     # Generate the ICS feed
+    # ics_feed = c.serialize()
+    # return Response(ics_feed, content_type='text/calendar; charset=utf-8')
+    
     ics_feed = c.serialize()
-    return Response(ics_feed, content_type='text/calendar; charset=utf-8')
+
+    response = Response(ics_feed, content_type='text/calendar; charset=utf-8')
+    response.headers['Content-Disposition'] = 'attachment; filename="calendar.ics"'
+    return response
+    
 
 if __name__ == "__main__":
     app.run()
