@@ -367,13 +367,11 @@ def calendar_feed(city,areal,category,level):
         date_format = "%Y-%m-%d-%H:%M"
         tournament_duration = timedelta(hours=8) if int(res.start.split(":")[0]) < 11 else timedelta(hours=4)
         
-        start_time = datetime.strptime(start_str, date_format)
+        start_time = datetime.strptime(start_str, date_format) - timedelta(hours=2)
         event = Event()
         event.name = res.name
         event.begin = start_time
-        # event.begin = "2023-10-17 10:00:00"
         event.duration = tournament_duration
-        # event.end = "2023-10-17 12:00:00"
         event.description = f"Kategorie: {res.category}\nCena:{res.price}\nPřihlášení: {res.signed}/{res.capacity}\nOrganizátor: {res.organizer}\n"
         event.location = res.city + " " + res.areal    
         event.url = res.link    
