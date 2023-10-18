@@ -1,6 +1,7 @@
 Flask
 selenium
 flask-marshmallow
+marshmallow-sqlalchemy
 Flask-Cors
 Flask-Bcrypt
 Flask-Mail
