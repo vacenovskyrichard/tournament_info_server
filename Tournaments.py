@@ -56,41 +56,7 @@ class TournamentManagement():
         self.tournament_list = []
         cl = CustomLogger()
         self.custom_log_manager = cl
-        self.logger = cl.logger
-        
-    def get_css_selector(self, element):
-        """Get the CSS selector for a WebElement."""
-        # Initialize an empty list to store the element selectors
-        selectors = []
-
-        # Traverse the DOM from the target element to the top-level HTML element
-        try:
-            while element.tag_name.lower() != 'html':
-                element_index = self.get_element_index(element)
-                if element_index == -1:
-                    return False,""
-                element_tag = element.tag_name
-                selectors.append(f"{element_tag}:nth-child({element_index})")
-                element = element.find_element(By.XPATH, "..")
-
-            # Reverse the list of selectors and join them to form the full CSS selector
-            selectors.reverse()
-            css_selector = ' > '.join(selectors)
-        except:
-            self.logger.error(f"Failed to get css selector.")
-            return False,""
-
-        return True, css_selector
-
-    def get_element_index(self,element):
-        try:
-            parent = element.find_element(By.XPATH, "..")
-            children = parent.find_elements(By.XPATH, "./*")
-            index = children.index(element) + 1
-            return index
-        except:
-            self.logger.error(f"Failed to get element index.")
-            return -1                
+        self.logger = cl.logger                      
 
     def get_category_by_name(self, name):
         if name:
@@ -105,14 +71,21 @@ class TournamentManagement():
         return "Jiné"
 
     def open_chrome_with_url(self, url):
+        testing = False
         try:
-            service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
+            if not testing:
+                service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
             chrome_options = webdriver.ChromeOptions()
-            chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
+            if not testing:
+                chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
             chrome_options.add_argument("--headless")
-            chrome_options.add_argument("--disable-dev-shm-usage")
-            chrome_options.add_argument("--no-sandbox")
-            self.driver = webdriver.Chrome(service=service, options=chrome_options)
+            if not testing:
+                chrome_options.add_argument("--disable-dev-shm-usage")
+                chrome_options.add_argument("--no-sandbox")
+                self.driver = webdriver.Chrome(service=service, options=chrome_options)
+            else:
+                self.driver = webdriver.Chrome(options=chrome_options)
+            
             self.driver.implicitly_wait(10)
             self.driver.maximize_window()
             self.driver.get(url)
@@ -120,89 +93,64 @@ class TournamentManagement():
         except:
             self.logger.error("Open chrom with url failed.")
             return False
-            
+        
     def get_pbt_data(self,attempt):
         tournament_areal = "Prague Beach Team (Střešovice)"
         tournament_city = "Praha"
         url = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
-        
-        if attempt == 1:
+        if attempt == 0:
             self.custom_log_manager.log_delimiter()
             self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
         
-        tournament_css_selectors = []
         if not self.open_chrome_with_url(url):
             return False
         
         try:
-            main_content = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
-            days = main_content.find_elements(By.CSS_SELECTOR, "ul.list-group")
+            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
+            tournaments_clickable = self.driver.find_elements(By.CLASS_NAME, "fa-chevron-right")
         except:
             self.logger.error(f"Failed to get main content.")
-            self.driver.save_screenshot("./Error.jpg")
-            self.driver.quit()
             tm.sleep(10)
+            self.driver.quit()
             return False
                     
         # Get css selectors for each tournament
-        for day in days:
-            try:
-                tournaments_list = day.find_elements(By.TAG_NAME, "li")[1:]
-            except:
-                self.logger.error(f"Failed to get tournament list at specific day.")
-                self.driver.save_screenshot("./Error.jpg")
-                self.driver.quit()
-                tm.sleep(10)
-                return False
-        
-            for tournament in tournaments_list:
-                success, css_selector = self.get_css_selector(tournament)
-                if success:
-                    tournament_css_selectors.append(css_selector)
-                else:
-                    self.driver.save_screenshot("./Error.jpg")
-                    self.driver.quit()
-                    tm.sleep(10)
-                    return False                             
-        
+        number_of_tournaments = len(tournaments_clickable)
+        if number_of_tournaments == 0:
+            self.custom_log_manager.info_message_only(f"   No turnaments in this areal.\n")
         self.driver.quit()
-        number_of_tournaments = len(tournament_css_selectors)
-        print("tournament_css_selectors")
-        print(tournament_css_selectors)
-        # get data from tournaments
-        for index in range(number_of_tournaments):
-            self.custom_log_manager.info_message_only(f"   Processing tournament {index+1}/{number_of_tournaments}")
-            self.custom_log_manager.info_message_only('   Scraping...')
+        
+        for i in range(number_of_tournaments):
+            tm.sleep(3)
             if not self.open_chrome_with_url(url):
                 return False
-            
             try:
-                tournament = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, tournament_css_selectors[index])))
-                tournament.click()
+                WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
+                self.driver.find_elements(By.CLASS_NAME, "fa-chevron-right")[i].click()
             except:
-                self.logger.error(f"Failed to get tournament by css selector.")
-                self.driver.save_screenshot("./Error.jpg")
-                self.driver.quit()
+                self.logger.error("Failed to get tournament element clickable.")
                 tm.sleep(10)
+                self.driver.quit()
                 return False
+            
+            self.custom_log_manager.info_message_only(f"   Processing tournament {i+1}/{number_of_tournaments}")
+            self.custom_log_manager.info_message_only('   Scraping...')
             
             try:
                 field_section = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".fieldsSection")))
                 details = field_section.find_elements(By.CLASS_NAME,"value")
             except:
                 self.logger.error("Failed to get tournament detail.")
-                self.driver.save_screenshot("./Error.jpg")
-                self.driver.quit()
                 tm.sleep(10)
+                self.driver.quit()
                 return False
             try:
                 tournament_name = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.title"))).text
                 signed, capacity = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.capacity  "))).text.split('/')
             except:
                 self.logger.error("Failed to get tournament name and capacity.")
-                self.driver.save_screenshot("./Error.jpg")
-                self.driver.quit()
                 tm.sleep(10)
+                self.driver.quit()
                 return False
             
             link = "https://www.praguebeachteam.cz/?menu=open-turnaje"
@@ -226,6 +174,7 @@ class TournamentManagement():
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
             self.custom_log_manager.info_message_only('')
+            self.driver.quit()
             
         self.driver.quit()
         return True
