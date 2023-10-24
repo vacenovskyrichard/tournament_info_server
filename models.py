@@ -6,9 +6,12 @@ from uuid import uuid4
 db = SQLAlchemy()
 
 
+def get_uuid():
+    return uuid4().hex
+
 class Tournament(db.Model):
     __tablename__ = "tournament"
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.String(32), primary_key=True, unique=True, default=get_uuid)
     name = db.Column(db.String(100), nullable=False)
     date = db.Column(db.Date, nullable=False)
     city = db.Column(db.String(100), nullable=False)
@@ -28,10 +31,6 @@ class Tournament(db.Model):
     creator = db.relationship('User', back_populates='tournaments')
     def __repr__(self):
         return f"{self.name}\nAreal: {self.areal}\n\n"
-
-
-def get_uuid():
-    return uuid4().hex
     
 class User(db.Model):
     __tablename__ = "user"

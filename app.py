@@ -233,9 +233,8 @@ def add_tournament():
         link=new_tournament["link"],
         user_id=new_tournament["user_id"]
     )
-    if add_to_database(result):
-        return tournament_schema.jsonify(result), 200
-    return {"message": "Tournament already in the database."}, 404
+    add_to_database(result)
+    return tournament_schema.jsonify(result), 200
 
 @app.route("/update/<id>/", methods=["PUT"])
 def update_tournament(id):
