@@ -351,15 +351,29 @@ def get_user_info():
 def calendar_feed(city,areal,category,level):
     filter_conditions = []
     if city != "none":
-        filter_conditions.append((getattr(Tournament, "city") == city))
+        filter_subconditions = []
+        for c in city.split(";"):
+            filter_subconditions.append((getattr(Tournament, "city") == c))
+        filter_conditions.append(db.or_(*filter_subconditions))
     if areal != "none":
-        filter_conditions.append((getattr(Tournament, "areal") == areal))
+        filter_subconditions = []
+        for a in areal.split(";"):
+            filter_subconditions.append((getattr(Tournament, "areal") == a))
+        filter_conditions.append(db.or_(*filter_subconditions))
     if category != "none":
-        filter_conditions.append((getattr(Tournament, "category") == category))
+        filter_subconditions = []
+        for c in category.split(";"):
+            print("c")
+            print(c)
+            filter_subconditions.append((getattr(Tournament, "category") == c))
+        filter_conditions.append(db.or_(*filter_subconditions))
     if level != "none":
-        filter_conditions.append((getattr(Tournament, "level") == level))
+        filter_subconditions = []
+        for l in level.split(";"):
+            filter_subconditions.append((getattr(Tournament, "level") == l))
+        filter_conditions.append(db.or_(*filter_subconditions))
 
-    final_filter = db.and_(True, *filter_conditions)
+    final_filter = db.and_(*filter_conditions)
 
     results = db.session.query(Tournament).filter(final_filter).all()
     if not results:
