@@ -314,15 +314,21 @@ def update_database():
 @app.route("/filter", methods=["POST"])
 def filter_results():
     filters = request.get_json()
-
     filter_conditions = []
-    for f in filters:
-        if filters[f] == "Bez filtru":
-            continue
-        filter_conditions.append((getattr(Tournament, f) == filters[f]))
+    
+    for key in filters:
+        filter_subconditions = []
+        if filters[key]:
+            for values in filters[key]:
+                print(getattr(Tournament, key), values["label"])
+                filter_subconditions.append((getattr(Tournament, key) == values["label"]))
+            filter_conditions.append(db.or_(*filter_subconditions))
 
-    final_filter = db.and_(True, *filter_conditions)
-
+    if filter_conditions:
+        final_filter = db.and_( *filter_conditions)
+    else:
+        final_filter = db.and_(True, *filter_conditions)
+        
     results = db.session.query(Tournament).filter(final_filter).all()
     if not results:
         return "", 404
