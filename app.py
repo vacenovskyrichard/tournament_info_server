@@ -14,6 +14,7 @@ from models import db, Tournament, User, get_uuid
 from config import ApplicationConfig
 from apscheduler.schedulers.background import BackgroundScheduler
 from ics import Calendar, Event
+from flask_migrate import Migrate
 from flask_jwt_extended import (
     create_access_token,
     get_jwt,
@@ -30,6 +31,7 @@ app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
 mail = Mail(app) # instantiate the mail class
 db.init_app(app=app)
+migrate = Migrate(app, db)
 
 CORS(app)
 
@@ -52,6 +54,7 @@ class TournamentSchema(ma.Schema):
             "category",
             "level",
             "link",
+            "last_update",
             "user_id"
         )
 
@@ -199,6 +202,8 @@ def add_to_database(tournament: Tournament):
         # Update the capacity and signed fields if the tournament is found
         found_tournament.capacity = tournament.capacity
         found_tournament.signed = tournament.signed
+        found_tournament.price = tournament.price
+        found_tournament.level = tournament.level
     else:
         db.session.add(tournament)
     db.session.commit()
@@ -231,6 +236,7 @@ def add_tournament():
         category=new_tournament["category"],
         level=new_tournament["level"],
         link=new_tournament["link"],
+        last_update=datetime.now(),
         user_id=new_tournament["user_id"]
     )
     add_to_database(result)
@@ -270,6 +276,7 @@ def update_tournament(id):
         tournament_to_update.level = received_tournament["level"]
     if "link" in received_tournament:
         tournament_to_update.link = received_tournament["link"]
+    tournament_to_update.last_update=datetime.now()
     db.session.commit()
 
     return tournament_schema.jsonify(tournament_to_update)
@@ -314,15 +321,21 @@ def update_database():
 @app.route("/filter", methods=["POST"])
 def filter_results():
     filters = request.get_json()
-
     filter_conditions = []
-    for f in filters:
-        if filters[f] == "Bez filtru":
-            continue
-        filter_conditions.append((getattr(Tournament, f) == filters[f]))
+    
+    for key in filters:
+        filter_subconditions = []
+        if filters[key]:
+            for values in filters[key]:
+                print(getattr(Tournament, key), values["label"])
+                filter_subconditions.append((getattr(Tournament, key) == values["label"]))
+            filter_conditions.append(db.or_(*filter_subconditions))
 
-    final_filter = db.and_(True, *filter_conditions)
-
+    if filter_conditions:
+        final_filter = db.and_( *filter_conditions)
+    else:
+        final_filter = db.and_(True, *filter_conditions)
+        
     results = db.session.query(Tournament).filter(final_filter).all()
     if not results:
         return "", 404
@@ -345,15 +358,29 @@ def get_user_info():
 def calendar_feed(city,areal,category,level):
     filter_conditions = []
     if city != "none":
-        filter_conditions.append((getattr(Tournament, "city") == city))
+        filter_subconditions = []
+        for c in city.split(";"):
+            filter_subconditions.append((getattr(Tournament, "city") == c))
+        filter_conditions.append(db.or_(*filter_subconditions))
     if areal != "none":
-        filter_conditions.append((getattr(Tournament, "areal") == areal))
+        filter_subconditions = []
+        for a in areal.split(";"):
+            filter_subconditions.append((getattr(Tournament, "areal") == a))
+        filter_conditions.append(db.or_(*filter_subconditions))
     if category != "none":
-        filter_conditions.append((getattr(Tournament, "category") == category))
+        filter_subconditions = []
+        for c in category.split(";"):
+            print("c")
+            print(c)
+            filter_subconditions.append((getattr(Tournament, "category") == c))
+        filter_conditions.append(db.or_(*filter_subconditions))
     if level != "none":
-        filter_conditions.append((getattr(Tournament, "level") == level))
+        filter_subconditions = []
+        for l in level.split(";"):
+            filter_subconditions.append((getattr(Tournament, "level") == l))
+        filter_conditions.append(db.or_(*filter_subconditions))
 
-    final_filter = db.and_(True, *filter_conditions)
+    final_filter = db.and_(*filter_conditions)
 
     results = db.session.query(Tournament).filter(final_filter).all()
     if not results:

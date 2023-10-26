@@ -29,8 +29,9 @@ class TournamentInfo:
     category: str
     level: str
     link: str
+    last_update:date
 
-    def __init__(self, name,tournament_date, city,areal, capacity, signed, price, start, organizer, category, level, link):
+    def __init__(self, name,tournament_date, city,areal, capacity, signed, price, start, organizer, category, level, link,last_update):
         self.name = name
         self.tournament_date = tournament_date
         self.city = city
@@ -43,6 +44,7 @@ class TournamentInfo:
         self.category = category
         self.level = level
         self.link = link
+        self.last_update = last_update
     
     def __str__(self):
         return f"Name: {self.name}\n   Date: {self.tournament_date}\n   City: {self.city}\n   Areal: {self.areal}"    
@@ -68,7 +70,13 @@ class TournamentManagement():
             elif "zen" in name_lower or "žen" in name_lower:
                 return "Ženy"
         self.logger.warning("Did not find category in tournament name.")
-        return "Jiné"
+        return "Jiné"    
+    def get_level_by_name(self, name):
+        if name:
+            name_lower = name.lower()
+            if "amat" in name_lower or "kemp" in name_lower or "hobb" in name_lower or  "začát" in name_lower or "zacat" in name_lower:
+                return "Hobby"
+        return "Open"
 
     def open_chrome_with_url(self, url):
         testing = False
@@ -158,7 +166,8 @@ class TournamentManagement():
                 return False
             
             link = "https://www.praguebeachteam.cz/?menu=open-turnaje"
-            category = self.get_category_by_name(details[0].text)
+            category = self.get_category_by_name(tournament_name)
+            level = self.get_level_by_name(tournament_name)
             organizer = details[1].text.split(",")[0]
             date_with_day_str, start = details[2].text.split(", ")
             tournament_date_str = date_with_day_str.split()[1].strip()
@@ -171,8 +180,9 @@ class TournamentManagement():
             # Convert the matched numbers to integers
             numbers = [int(number) for number in numbers]
             price = max(numbers)   
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",link,)
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
             )
 
             self.driver.quit()
@@ -262,7 +272,7 @@ class TournamentManagement():
                 continue
 
             try:
-                price = new_content.find_element(By.CLASS_NAME, "flb_event_price").text.split(",")[0]
+                price = int(new_content.find_element(By.CLASS_NAME, "flb_event_price").text.split(",")[0])/2
 
                 capacity, free = list(map(int,re.findall(r"\d+",new_content.find_element(By.CLASS_NAME, "flb_event_places").text,),))
             except:
@@ -278,9 +288,10 @@ class TournamentManagement():
                 continue
             
             category = self.get_category_by_name(tournament_name)
-
+            level = self.get_level_by_name(tournament_name)
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",link,)
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
             )
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
@@ -356,9 +367,11 @@ class TournamentManagement():
                 self.logger.error("Failed to get info after clicking tournament detail.")
                 continue
                 
+            level = self.get_level_by_name(tournament_name)
             organizer = "Ondřej Michálek"
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",url,)
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,url,last_update)
             )
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
@@ -480,11 +493,12 @@ class TournamentManagement():
             tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
             start = time_str.split("–")[0]
             category = self.get_category_by_name(name.text)
-            price = price_element.text.split()[1]            
+            level = self.get_level_by_name(name.text)
+            price = int(price_element.text.split()[1])/2            
             signed, capacity = re.search(r'\d+/\d+', capacity_element.text).group(0).split("/")            
-            
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,"Hobby/Open",found_tournaments_urls[i])
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,found_tournaments_urls[i],last_update)
             )
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')

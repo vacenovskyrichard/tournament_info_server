@@ -13,9 +13,12 @@ db.init_app(app)
 
 def add_to_database(tournament):
     date_format = "%Y-%m-%d"
-
+    
     if isinstance(tournament.date, str):
+        print("!!!Processing date!!!")
         tournament.date = datetime.strptime(tournament.date, date_format)
+    if isinstance(tournament.last_update, str):
+        tournament.last_update = datetime.strptime(tournament.last_update, date_format)
 
     found_tournament = (
         db.session.query(Tournament)
@@ -35,6 +38,9 @@ def add_to_database(tournament):
     if found_tournament:
         found_tournament.capacity = tournament.capacity
         found_tournament.signed = tournament.signed
+        found_tournament.price = tournament.price
+        found_tournament.level = tournament.level
+        found_tournament.last_update = tournament.last_update
     else:
         db.session.add(tournament)
     db.session.commit()
@@ -57,6 +63,7 @@ def update_database():
                 category=tournament.category,
                 level=tournament.level,
                 link=tournament.link,
+                last_update=tournament.last_update,
                 user_id='1'
             )
         )
