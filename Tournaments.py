@@ -262,7 +262,7 @@ class TournamentManagement():
                 continue
 
             try:
-                price = new_content.find_element(By.CLASS_NAME, "flb_event_price").text.split(",")[0]
+                price = int(new_content.find_element(By.CLASS_NAME, "flb_event_price").text.split(",")[0])/2
 
                 capacity, free = list(map(int,re.findall(r"\d+",new_content.find_element(By.CLASS_NAME, "flb_event_places").text,),))
             except:
@@ -480,7 +480,7 @@ class TournamentManagement():
             tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
             start = time_str.split("–")[0]
             category = self.get_category_by_name(name.text)
-            price = price_element.text.split()[1]            
+            price = int(price_element.text.split()[1])/2            
             signed, capacity = re.search(r'\d+/\d+', capacity_element.text).group(0).split("/")            
             
             self.tournament_list.append(

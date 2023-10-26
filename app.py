@@ -199,6 +199,8 @@ def add_to_database(tournament: Tournament):
         # Update the capacity and signed fields if the tournament is found
         found_tournament.capacity = tournament.capacity
         found_tournament.signed = tournament.signed
+        found_tournament.price = tournament.price
+        found_tournament.level = tournament.level
     else:
         db.session.add(tournament)
     db.session.commit()
