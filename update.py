@@ -12,10 +12,15 @@ app.config.from_object('config.ApplicationConfig')
 db.init_app(app)
 
 def add_to_database(tournament):
+    """Adds tournament to database if not existing, or updating existing one
+
+    Args:
+        tournament (Tournament): tournament to be added or updated
+    """
     date_format = "%Y-%m-%d"
     
+    #TODO why is this here?
     if isinstance(tournament.date, str):
-        print("!!!Processing date!!!")
         tournament.date = datetime.strptime(tournament.date, date_format)
     if isinstance(tournament.last_update, str):
         tournament.last_update = datetime.strptime(tournament.last_update, date_format)
@@ -39,15 +44,28 @@ def add_to_database(tournament):
         found_tournament.capacity = tournament.capacity
         found_tournament.signed = tournament.signed
         found_tournament.price = tournament.price
+        found_tournament.start = tournament.start
+        found_tournament.organizer = tournament.organizer
         found_tournament.level = tournament.level
+        found_tournament.link = tournament.link
         found_tournament.last_update = tournament.last_update
     else:
         db.session.add(tournament)
     db.session.commit()
 
+def delete_old_tournaments():
+    old_tournaments = db.session.query(Tournament).filter(Tournament.date < date.today()).all()
+    for t in old_tournaments:
+        print("tournament to be deleted: " + str(t))
+        db.session.delete(t)
+    db.session.commit()
+
 def update_database():
-    tournaments = TournamentManagement()
-    found_tournaments = tournaments.run_all_scrapers()
+    delete_old_tournaments()
+    # init tournament management class
+    tm = TournamentManagement()
+    # run web scraping
+    found_tournaments = tm.run_all_scrapers()
     for tournament in found_tournaments:
         add_to_database(
             Tournament(
