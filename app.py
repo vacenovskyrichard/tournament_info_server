@@ -14,6 +14,7 @@ from models import db, Tournament, User, get_uuid
 from config import ApplicationConfig
 from apscheduler.schedulers.background import BackgroundScheduler
 from ics import Calendar, Event
+from flask_migrate import Migrate
 from flask_jwt_extended import (
     create_access_token,
     get_jwt,
@@ -30,6 +31,7 @@ app = Flask(__name__)
 app.config.from_object(ApplicationConfig)
 mail = Mail(app) # instantiate the mail class
 db.init_app(app=app)
+migrate = Migrate(app, db)
 
 CORS(app)
 
@@ -52,6 +54,7 @@ class TournamentSchema(ma.Schema):
             "category",
             "level",
             "link",
+            "last_update",
             "user_id"
         )
 
@@ -233,6 +236,7 @@ def add_tournament():
         category=new_tournament["category"],
         level=new_tournament["level"],
         link=new_tournament["link"],
+        last_update=datetime.now(),
         user_id=new_tournament["user_id"]
     )
     add_to_database(result)
@@ -272,6 +276,7 @@ def update_tournament(id):
         tournament_to_update.level = received_tournament["level"]
     if "link" in received_tournament:
         tournament_to_update.link = received_tournament["link"]
+    tournament_to_update.last_update=datetime.now()
     db.session.commit()
 
     return tournament_schema.jsonify(tournament_to_update)

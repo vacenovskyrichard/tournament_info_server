@@ -24,6 +24,7 @@ class Tournament(db.Model):
     category = db.Column(db.String(100))
     level = db.Column(db.String(100))
     link = db.Column(db.String(100))
+    last_update = db.Column(db.DateTime)
     # Add a foreign key column that references the 'id' of the 'User' table
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'))
 

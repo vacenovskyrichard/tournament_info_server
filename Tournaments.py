@@ -29,8 +29,9 @@ class TournamentInfo:
     category: str
     level: str
     link: str
+    last_update:date
 
-    def __init__(self, name,tournament_date, city,areal, capacity, signed, price, start, organizer, category, level, link):
+    def __init__(self, name,tournament_date, city,areal, capacity, signed, price, start, organizer, category, level, link,last_update):
         self.name = name
         self.tournament_date = tournament_date
         self.city = city
@@ -43,6 +44,7 @@ class TournamentInfo:
         self.category = category
         self.level = level
         self.link = link
+        self.last_update = last_update
     
     def __str__(self):
         return f"Name: {self.name}\n   Date: {self.tournament_date}\n   City: {self.city}\n   Areal: {self.areal}"    
@@ -178,8 +180,9 @@ class TournamentManagement():
             # Convert the matched numbers to integers
             numbers = [int(number) for number in numbers]
             price = max(numbers)   
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,)
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
             )
 
             self.driver.quit()
@@ -286,9 +289,9 @@ class TournamentManagement():
             
             category = self.get_category_by_name(tournament_name)
             level = self.get_level_by_name(tournament_name)
-
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,)
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
             )
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
@@ -366,8 +369,9 @@ class TournamentManagement():
                 
             level = self.get_level_by_name(tournament_name)
             organizer = "Ondřej Michálek"
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,url,)
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,url,last_update)
             )
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
@@ -492,9 +496,9 @@ class TournamentManagement():
             level = self.get_level_by_name(name.text)
             price = int(price_element.text.split()[1])/2            
             signed, capacity = re.search(r'\d+/\d+', capacity_element.text).group(0).split("/")            
-            
+            last_update = datetime.now()
             self.tournament_list.append(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,found_tournaments_urls[i])
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,found_tournaments_urls[i],last_update)
             )
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
