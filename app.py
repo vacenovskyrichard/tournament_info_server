@@ -418,6 +418,22 @@ def calendar_feed(city,areal,category,level):
 def unauthorized_callback(e):
     return jsonify({"message": "Token has expired"}), 401
 
+@app.route("/request_organizer", methods=["POST"])
+def request_organizer_access():
+    user_id = request.json.get("id", None)
+    subject = 'Žádost o práva organizátora'
+    sender = 'jdem.hrat@email.cz'
+    user = User.query.filter_by(id=user_id).first()
+
+    msg = Message(
+                subject=subject,
+                sender =sender,
+                recipients = ["vaceri@seznam.cz"]
+               )
+    msg.body = f'Uživatel {user.name} {user.surname} žádá o práva organizátora.' 
+    mail.send(msg)
+    return "", 200
+
 if __name__ == "__main__":
     app.run()
 #     # tm = TournamentManagement()
