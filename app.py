@@ -413,7 +413,10 @@ def calendar_feed(city,areal,category,level):
     response = Response(ics_feed, content_type='text/calendar; charset=utf-8')
     response.headers['Content-Disposition'] = 'attachment; filename="calendar.ics"'
     return response
-    
+
+@jwt.unauthorized_loader
+def unauthorized_callback(e):
+    return jsonify({"message": "Token has expired"}), 401
 
 if __name__ == "__main__":
     app.run()

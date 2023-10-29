@@ -50,15 +50,26 @@ class TournamentInfo:
         return f"Name: {self.name}\n   Date: {self.tournament_date}\n   City: {self.city}\n   Areal: {self.areal}"    
     def __repr__(self):
         return f"{self.name}"
+    def __eq__(self, other):
+        return (
+            isinstance(other, TournamentInfo)
+            and self.name == other.name
+            and self.tournament_date == other.tournament_date
+        )
+
+    def __hash__(self):
+        return hash((self.name,self.tournament_date))
             
 class TournamentManagement():
-    tournament_list:list[TournamentInfo]
+    tournament_set:set[TournamentInfo]
     driver: webdriver
+    total_found_tournaments:int
     def __init__(self):
-        self.tournament_list = []
+        self.tournament_set = set()
         cl = CustomLogger()
         self.custom_log_manager = cl
-        self.logger = cl.logger                      
+        self.logger = cl.logger
+        self.total_found_tournaments = 0                      
 
     def get_category_by_name(self, name):
         if name:
@@ -124,6 +135,9 @@ class TournamentManagement():
                     
         # Get css selectors for each tournament
         number_of_tournaments = len(tournaments_clickable)
+        if attempt == 0:
+            self.total_found_tournaments += number_of_tournaments
+        
        
         if number_of_tournaments > 0:
             self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
@@ -181,7 +195,7 @@ class TournamentManagement():
             numbers = [int(number) for number in numbers]
             price = max(numbers)   
             last_update = datetime.now()
-            self.tournament_list.append(
+            self.tournament_set.add(
                 TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
             )
 
@@ -215,6 +229,7 @@ class TournamentManagement():
             self.logger.error("Failed to get number of tournaments.")
             return False
         
+        self.total_found_tournaments += number_of_tournaments
         if number_of_tournaments > 0:
             self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
         else:
@@ -290,7 +305,7 @@ class TournamentManagement():
             category = self.get_category_by_name(tournament_name)
             level = self.get_level_by_name(tournament_name)
             last_update = datetime.now()
-            self.tournament_list.append(
+            self.tournament_set.add(
                 TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
             )
             self.driver.quit()
@@ -316,7 +331,7 @@ class TournamentManagement():
             return False
         
         number_of_tournaments:int = len(tournament_elements)
-        
+        self.total_found_tournaments += number_of_tournaments
         if number_of_tournaments > 0:
             self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
         else:
@@ -370,7 +385,7 @@ class TournamentManagement():
             level = self.get_level_by_name(tournament_name)
             organizer = "Ondřej Michálek"
             last_update = datetime.now()
-            self.tournament_list.append(
+            self.tournament_set.add(
                 TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,url,last_update)
             )
             self.driver.quit()
@@ -420,7 +435,7 @@ class TournamentManagement():
         tournament_city = "Praha"
         tournament_name = "Turnaj kempařů s Mírou Nekolou"       
         organizer = "Miroslav Nekola" 
-                
+        # urls of every category 
         urls = {
             "mix" : "https://www.beachklub.cz/turnaje/turnaj-mixy-s-mirou-nekolou",
             "men" : "https://www.beachklub.cz/turnaje/turnaj-pro-kempare",
@@ -430,6 +445,7 @@ class TournamentManagement():
         self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
         found_tournaments_urls = []
         
+        # Get url of every single tournament in each category and append it to found_tournaments_urls list 
         for url in urls:
             if not self.open_chrome_with_url(urls[url]):
                 return False
@@ -443,7 +459,7 @@ class TournamentManagement():
                 return False
             
             number_of_tournaments = len(tournament_elements)
-
+            self.total_found_tournaments += number_of_tournaments
             if number_of_tournaments > 0:
                 self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments} in category {url}.\n")
             else:
@@ -466,7 +482,7 @@ class TournamentManagement():
         for tournament_id in range(number_of_tournaments):
             self.custom_log_manager.info_message_only(f"   Processing tournament {tournament_id+1}/{number_of_tournaments}")
             self.custom_log_manager.info_message_only('   Scraping...')
-            if not self.open_chrome_with_url(found_tournaments_urls[i]):
+            if not self.open_chrome_with_url(found_tournaments_urls[tournament_id]):
                 return False
         
             try:
@@ -497,7 +513,7 @@ class TournamentManagement():
             price = int(price_element.text.split()[1])/2            
             signed, capacity = re.search(r'\d+/\d+', capacity_element.text).group(0).split("/")            
             last_update = datetime.now()
-            self.tournament_list.append(
+            self.tournament_set.add(
                 TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,found_tournaments_urls[i],last_update)
             )
             self.driver.quit()
@@ -512,20 +528,28 @@ class TournamentManagement():
         for attempt in range(5):
             if self.get_pbt_data(attempt):
                 break 
-        self.get_cvf_data()
+
+        # self.get_cvf_data()
         self.get_ladvi_data()
         self.get_michalek_data()
         self.get_pankrac_data()
+        
+        for tour in self.tournament_set:
+            print(tour)
+            print()
+        number_of_tournaments = len(self.tournament_set)
         self.custom_log_manager.info_message_only("------------------------------------------- SUMMARY -------------------------------------------\n")
-        self.custom_log_manager.info_message_only("TBD\n") 
+        self.custom_log_manager.info_message_only(f"Total of found tournaments: {self.total_found_tournaments}\n") 
+        self.custom_log_manager.info_message_only(f"Succesfully processed: {number_of_tournaments}\n") 
+        self.custom_log_manager.info_message_only(f"Failed to process: {self.total_found_tournaments - number_of_tournaments}\n") 
         self.custom_log_manager.info_message_only(f"---------------------------- Update finished at {datetime.now().replace(microsecond=0)} ----------------------------")            
         # self.custom_log_manager.info_message_only(f"--------------------------- Next update starts at {(start_time + timedelta(hours=1)).replace(microsecond=0)} --------------------------\n")            
         self.custom_log_manager.remove_all_handlers()
-        return self.tournament_list
+        return list(self.tournament_set)
 
     def generate_json(self):
         with open("./tournaments.json", "w") as outfile:
-            json.dump(self.tournament_list, outfile, ensure_ascii=False)
+            json.dump(list(self.tournament_set), outfile, ensure_ascii=False)
 
     # print("======================================================")
     # print("tournament_name")
