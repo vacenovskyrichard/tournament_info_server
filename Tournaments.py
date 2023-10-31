@@ -541,7 +541,7 @@ class TournamentManagement():
             # Access the fields for each element in the 'data' list
             for element in data['data']:
                 tournament_name = element['name']
-                tournament_date = datetime.fromisoformat(element['startdate'])
+                tournament_date = datetime.strptime((element['startdate'].split("T"))[0], "%Y-%m-%d")
                 start = f"{element['starttime']['h']}:{element['starttime']['i']}"
                 capacity = element['capacity']
                 signed = element['teams']
