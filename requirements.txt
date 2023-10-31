@@ -12,4 +12,4 @@ gunicorn
 APScheduler
 ics
 Flask-Migrate
-
+requests
