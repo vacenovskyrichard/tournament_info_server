@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import time as tm
 import json
 import re
+import requests
 from selenium.webdriver.common.action_chains import ActionChains
 from datetime import datetime, date, timedelta
 from CzechMonths import CzechMonths
@@ -521,6 +522,49 @@ class TournamentManagement():
             self.custom_log_manager.info_message_only('')
         return True
 
+    def get_bvsp_data(self):
+        self.custom_log_manager.log_delimiter()
+        self.custom_log_manager.info_message_only(f"\nArealy: BVŠP.\n")
+        url = "https://api.bvsp.rezervin.app/v1/event/list?categories=19"
+        response = requests.get(url)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            data = json.loads(response.text)
+            number_of_tournaments = len(data)
+            if number_of_tournaments > 0:
+                self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
+            else:
+                self.custom_log_manager.info_message_only(f"   No turnaments in category {url}.\n")
+                return True
+            self.total_found_tournaments += number_of_tournaments
+            # Access the fields for each element in the 'data' list
+            for element in data['data']:
+                tournament_name = element['name']
+                tournament_date = datetime.strptime((element['startdate'].split("T"))[0], "%Y-%m-%d")
+                start = f"{element['starttime']['h']}:{element['starttime']['i']}"
+                capacity = element['capacity']
+                signed = element['teams']
+                tournament_areal = element['facility_name']
+                price = element['price']
+                tournament_city = "Praha"
+                tournament_city = "Praha"
+                category = self.get_category_by_name(tournament_name)
+                level = self.get_level_by_name(tournament_name)
+                link = "https://bvsp.cz/dospeli/turnaje/"
+                organizer = "Neznámý"
+                
+                last_update = datetime.now()
+                self.tournament_set.add(
+                    TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
+                )
+            self.custom_log_manager.info_message_only('   Data fetched succesfuly!')
+            self.custom_log_manager.info_message_only('')
+        else:
+            self.custom_log_manager.info_message_only('   Failed to get data from API')
+            return False
+        return True
+
     def run_all_scrapers(self):
         start_time = datetime.now().replace(microsecond=0)
         self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
@@ -533,10 +577,13 @@ class TournamentManagement():
         self.get_ladvi_data()
         self.get_michalek_data()
         self.get_pankrac_data()
+        self.get_bvsp_data()
         
-        for tour in self.tournament_set:
-            print(tour)
-            print()
+        # for tour in self.tournament_set:
+        #     print(tour)
+        #     print()
+        
+        
         number_of_tournaments = len(self.tournament_set)
         self.custom_log_manager.info_message_only("------------------------------------------- SUMMARY -------------------------------------------\n")
         self.custom_log_manager.info_message_only(f"Total of found tournaments: {self.total_found_tournaments}\n") 
