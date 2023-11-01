@@ -7,7 +7,8 @@ class ApplicationConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     # SQLALCHEMY_ECHO = True
 
-    SQLALCHEMY_DATABASE_URI = "postgresql://azohcmaq:HQIK2v2P_qWrq7EJ09tGzrv4FhxPfi2k@trumpet.db.elephantsql.com/azohcmaq"
+    # SQLALCHEMY_DATABASE_URI = "postgresql://azohcmaq:HQIK2v2P_qWrq7EJ09tGzrv4FhxPfi2k@trumpet.db.elephantsql.com/azohcmaq"
+    SQLALCHEMY_DATABASE_URI = "postgresql://vacenovskyrichard:f5VEIMl6bSjq@ep-square-wave-39200737.eu-central-1.aws.neon.tech/turnajky.cz"
     
     JWT_SECRET_KEY = "my-extremly-safe-secret-key-edwrqverfgafgvqewrfgqewrfgqwerfg"
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)
