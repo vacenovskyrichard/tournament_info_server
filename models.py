@@ -25,6 +25,8 @@ class Tournament(db.Model):
     level = db.Column(db.String(100))
     link = db.Column(db.String(100))
     last_update = db.Column(db.DateTime)
+    registration_enabled = db.Column(db.Boolean, default=False)  # Add the boolean column
+    
     # Add a foreign key column that references the 'id' of the 'User' table
     user_id = db.Column(db.String(32), db.ForeignKey('user.id'))
 

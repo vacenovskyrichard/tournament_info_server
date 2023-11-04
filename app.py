@@ -55,7 +55,8 @@ class TournamentSchema(ma.Schema):
             "level",
             "link",
             "last_update",
-            "user_id"
+            "user_id",
+            "registration_enabled"
         )
 
 tournament_schema = TournamentSchema()
@@ -278,7 +279,8 @@ def add_tournament():
         level=new_tournament["level"],
         link=new_tournament["link"],
         last_update=datetime.now(),
-        user_id=new_tournament["user_id"]
+        user_id=new_tournament["user_id"],
+        registration_enabled=new_tournament["registration_enabled"]
     )
     add_to_database(result)
     return tournament_schema.jsonify(result), 200
@@ -352,7 +354,8 @@ def update_database():
                 category=tournament.category,
                 level=tournament.level,
                 link=tournament.link,
-                user_id='1'
+                user_id='1',
+                registration_enabled=False
             )
         )
     all_tournaments = Tournament.query.all()
