@@ -489,7 +489,6 @@ def request_organizer_access():
 @app.route("/create_team", methods=["POST"])
 def create_team():
     player_id = request.json.get("player_id", None)
-    
     tournament_id = request.json.get("tournament_id", None)
     teammate_name = request.json.get("teammate_name", None)
     teammate_surname = request.json.get("teammate_surname", None)
@@ -513,7 +512,25 @@ def delete_team():
 
     return jsonify({"message":"Team succesfully deleted"}), 200
 
-
+@app.route("/get_teams", methods=["GET"])
+def get_teams():
+    tournament_id = request.json.get("tournament_id", None)
+        
+    tournament = Tournament.query.filter(Tournament.id==tournament_id).first()
+    signed_teams = []
+    for found_team in tournament.signed_teams:
+        player1 = Player.query.filter(Player.id==found_team.player_id).first()
+        print(player1.name,player1.surname)
+        print(found_team.teammate_name,found_team.teammate_surname)
+        print("-----------------------------------")
+        signed_teams.append({
+            "player1_name": player1.name,
+            "player1_surname": player1.name,
+            "player2_name": found_team.teammate_name,
+            "player2_surname": found_team.teammate_surname,
+        })
+    
+    return jsonify(signed_teams), 200
 
 if __name__ == "__main__":
     app.run()
