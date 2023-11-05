@@ -10,7 +10,7 @@ from datetime import date, datetime
 from datetime import datetime, timedelta, timezone
 from flask_bcrypt import Bcrypt
 from flask_mail import Mail, Message
-from models import db, Tournament, User, get_uuid
+from models import db, Tournament, User, Player,SignedTeam,get_uuid
 from config import ApplicationConfig
 from apscheduler.schedulers.background import BackgroundScheduler
 from ics import Calendar, Event
@@ -55,7 +55,8 @@ class TournamentSchema(ma.Schema):
             "level",
             "link",
             "last_update",
-            "user_id"
+            "user_id",
+            "registration_enabled"
         )
 
 tournament_schema = TournamentSchema()
@@ -88,7 +89,12 @@ def refresh_expiring_jwts(response):
 def login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
-    user = User.query.filter_by(email=email).first()
+    isPlayer = request.json.get("isPlayer", None)
+    
+    if isPlayer:
+        user = Player.query.filter_by(email=email).first()
+    else:
+        user = User.query.filter_by(email=email).first()
 
     if user is None:
         return jsonify({"error": "Unauthorized"}), 401
@@ -105,11 +111,17 @@ def login():
 @app.route("/reset", methods=["POST"])
 def reset_password():
     email = request.json.get("email", None)
+    isPlayer = request.json.get("isPlayer", None)
     subject = 'Reset hesla'
     sender = 'jdem.hrat@email.cz'
     tmp_password = get_uuid()[-10:]
-    user = User.query.filter_by(email=email).first()
-
+    
+    
+    if isPlayer:
+        user = Player.query.filter_by(email=email).first()
+    else:
+        user = User.query.filter_by(email=email).first()
+    
     if user is None:
         return jsonify({"error": "User with this email does not exist"}), 404
     user.password =  bcrypt.generate_password_hash(tmp_password).decode("utf-8")
@@ -130,14 +142,23 @@ def register_user():
     password = request.json.get("password", None)
     name = request.json.get("name", None)
     surname = request.json.get("surname", None)
+    isPlayer = request.json.get("isPlayer", None)
 
-    user_exists = User.query.filter_by(email=email).first() is not None
 
+    if isPlayer:
+        user_exists = Player.query.filter_by(email=email).first() is not None
+    else:
+        user_exists = User.query.filter_by(email=email).first() is not None
+        
     if user_exists:
         return jsonify({"error": "User already exists"}), 409
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-    new_user = User(email=email, password=hashed_password,name=name,surname=surname)
-
+    
+    if isPlayer:
+        new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
+    else:
+        new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+        
     db.session.add(new_user)
     db.session.commit()
 
@@ -149,11 +170,20 @@ def google_login():
     password = request.json.get("password", None)
     name = request.json.get("name", None)
     surname = request.json.get("surname", None)
+    isPlayer = request.json.get("isPlayer", None)
+    
 
-    user_exists = User.query.filter_by(email=email).first() is not None
+    if isPlayer:
+        user_exists = Player.query.filter_by(email=email).first() is not None
+    else:
+        user_exists = User.query.filter_by(email=email).first() is not None
 
     if user_exists:
-        user = User.query.filter_by(email=email).first()
+        if isPlayer:
+            user = Player.query.filter_by(email=email).first()
+        else:
+            user = User.query.filter_by(email=email).first()
+        
 
         if not bcrypt.check_password_hash(user.password, password):
             return jsonify({"error": "Unauthorized"}), 401
@@ -163,7 +193,13 @@ def google_login():
         return jsonify(response), 200    
 
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-    new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+        
+    if isPlayer:
+        new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
+    else:
+        new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+        
+    
     db.session.add(new_user)
     db.session.commit()
     
@@ -212,8 +248,13 @@ def add_to_database(tournament: Tournament):
 def get_all_tournaments():
     all_tournaments = Tournament.query.all()
     results = tournaments_schema.dump(all_tournaments)
-    sorted_data = sorted(results, key=lambda x: x['date'])
-    return jsonify(sorted_data)
+    # This is already happening in frontend
+    # sorted_data = sorted(results, key=lambda x: x['date'])
+    # add signed teams to data - !! This really slows fetching data down!!
+    # for d in sorted_data: 
+    #     d['signed_teams'] = get_teams(d['id'])        
+    
+    return jsonify(results)
 
 @app.route("/get/<id>/", methods=["GET"])
 def get_tournament_by_id(id):
@@ -237,7 +278,8 @@ def add_tournament():
         level=new_tournament["level"],
         link=new_tournament["link"],
         last_update=datetime.now(),
-        user_id=new_tournament["user_id"]
+        user_id=new_tournament["user_id"],
+        registration_enabled=new_tournament["registration_enabled"]
     )
     add_to_database(result)
     return tournament_schema.jsonify(result), 200
@@ -311,7 +353,8 @@ def update_database():
                 category=tournament.category,
                 level=tournament.level,
                 link=tournament.link,
-                user_id='1'
+                user_id='1',
+                registration_enabled=False
             )
         )
     all_tournaments = Tournament.query.all()
@@ -347,11 +390,18 @@ def filter_results():
 @jwt_required()
 def get_user_info():
     user_id = request.json.get("user_id", None)
-    user = User.query.filter_by(id=user_id).first()
+    isPlayer = request.json.get("isPlayer", None)
+    
+    if isPlayer:
+        user = Player.query.filter_by(id=user_id).first()
+        response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role": "player"}
+    else:
+        user = User.query.filter_by(id=user_id).first()
+        response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
     if not user:
         return jsonify({"error": "User not found."}), 404
-    
-    response = {"id":user.id,"name":user.name,"surname":user.surname,"email":user.email,"role":user.role}
+    print("response")
+    print(response)
     return jsonify(response), 200
 
 @app.route('/ical.feed/<city>/<areal>/<category>/<level>/', methods=["GET"])
@@ -434,10 +484,56 @@ def request_organizer_access():
     mail.send(msg)
     return "", 200
 
+
+@app.route("/create_team", methods=["POST"])
+def create_team():
+    player_id = request.json.get("player_id", None)
+    tournament_id = request.json.get("tournament_id", None)
+    teammate_name = request.json.get("teammate_name", None)
+    teammate_surname = request.json.get("teammate_surname", None)
+    
+    new_team = SignedTeam(player_id=player_id,tournament_id=tournament_id,teammate_name=teammate_name,teammate_surname=teammate_surname)
+    db.session.add(new_team)
+    db.session.commit()
+
+    return jsonify({"message":"Team succesfully signed"}), 200
+
+@app.route("/delete_team", methods=["DELETE"])
+def delete_team():
+    player_id = request.json.get("player_id", None)
+    tournament_id = request.json.get("tournament_id", None)
+        
+    team_to_delete = SignedTeam.query.filter(SignedTeam.player_id == player_id,SignedTeam.tournament_id==tournament_id).first()
+    print("team_to_delete")
+    print(team_to_delete)
+    db.session.delete(team_to_delete)
+    db.session.commit()
+
+    return jsonify({"message":"Team succesfully deleted"}), 200
+
+
+@app.route("/get_teams", methods=["POST"])
+@jwt_required()
+def get_teams():
+    user_id = request.json.get("userId", None)
+    all_tournaments = Tournament.query.all()
+    all_tournaments_teams = {}
+    for tournament in all_tournaments:
+        signed_teams = []
+        isSigned = False
+        for found_team in tournament.signed_teams:
+            player1 = Player.query.filter(Player.id==found_team.player_id).first()
+            if found_team.player_id == user_id: isSigned =True
+            signed_teams.append({
+                "signed_player_id": found_team.player_id,
+                "player1_name": player1.name,
+                "player1_surname": player1.surname,
+                "player2_name": found_team.teammate_name,
+                "player2_surname": found_team.teammate_surname,
+            })
+        all_tournaments_teams[tournament.id] = {"teams":signed_teams, "isSigned":isSigned}
+        
+    return jsonify(all_tournaments_teams),200
+
 if __name__ == "__main__":
-    app.run()
-#     # tm = TournamentManagement()
-#     # tm.run_all_scrapers()
-#     # for tour in tm.tournament_list:
-#     #     print(tour)
-#     #     print()
+    app.run(debug=True)

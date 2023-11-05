@@ -82,7 +82,8 @@ def update_database():
                 level=tournament.level,
                 link=tournament.link,
                 last_update=tournament.last_update,
-                user_id='1'
+                user_id='1',
+                registration_enabled=False
             )
         )
 
