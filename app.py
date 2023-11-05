@@ -512,10 +512,11 @@ def delete_team():
 
     return jsonify({"message":"Team succesfully deleted"}), 200
 
-@app.route("/get_teams", methods=["GET"])
-def get_teams():
-    tournament_id = request.json.get("tournament_id", None)
-        
+@app.route("/get_teams/<tournament_id>/", methods=["GET"])
+def get_teams(tournament_id):
+    # tournament_id = request.json.get("tournament_id", None)
+    print("tournament_id")    
+    print(tournament_id)    
     tournament = Tournament.query.filter(Tournament.id==tournament_id).first()
     signed_teams = []
     for found_team in tournament.signed_teams:
