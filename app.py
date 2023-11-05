@@ -248,12 +248,13 @@ def add_to_database(tournament: Tournament):
 def get_all_tournaments():
     all_tournaments = Tournament.query.all()
     results = tournaments_schema.dump(all_tournaments)
-    sorted_data = sorted(results, key=lambda x: x['date'])
-    # add signed teams to data
-    for d in sorted_data:
-        d['signed_teams'] = get_teams(d['id'])        
+    # This is already happening in frontend
+    # sorted_data = sorted(results, key=lambda x: x['date'])
+    # add signed teams to data - !! This really slows fetching data down!!
+    # for d in sorted_data: 
+    #     d['signed_teams'] = get_teams(d['id'])        
     
-    return jsonify(sorted_data)
+    return jsonify(results)
 
 @app.route("/get/<id>/", methods=["GET"])
 def get_tournament_by_id(id):
@@ -510,20 +511,29 @@ def delete_team():
 
     return jsonify({"message":"Team succesfully deleted"}), 200
 
-def get_teams(tournament_id):
-    tournament = Tournament.query.filter(Tournament.id==tournament_id).first()
-    signed_teams = []
-    for found_team in tournament.signed_teams:
-        player1 = Player.query.filter(Player.id==found_team.player_id).first()
-        signed_teams.append({
-            "signed_player_id": found_team.player_id,
-            "player1_name": player1.name,
-            "player1_surname": player1.surname,
-            "player2_name": found_team.teammate_name,
-            "player2_surname": found_team.teammate_surname,
-        })
-    
-    return signed_teams
+
+@app.route("/get_teams", methods=["POST"])
+@jwt_required()
+def get_teams():
+    user_id = request.json.get("userId", None)
+    all_tournaments = Tournament.query.all()
+    all_tournaments_teams = {}
+    for tournament in all_tournaments:
+        signed_teams = []
+        isSigned = False
+        for found_team in tournament.signed_teams:
+            player1 = Player.query.filter(Player.id==found_team.player_id).first()
+            if found_team.player_id == user_id: isSigned =True
+            signed_teams.append({
+                "signed_player_id": found_team.player_id,
+                "player1_name": player1.name,
+                "player1_surname": player1.surname,
+                "player2_name": found_team.teammate_name,
+                "player2_surname": found_team.teammate_surname,
+            })
+        all_tournaments_teams[tournament.id] = {"teams":signed_teams, "isSigned":isSigned}
+        
+    return jsonify(all_tournaments_teams),200
 
 if __name__ == "__main__":
     app.run(debug=True)
