@@ -171,20 +171,14 @@ def google_login():
     name = request.json.get("name", None)
     surname = request.json.get("surname", None)
     isPlayer = request.json.get("isPlayer", None)
-
-    print("isPlayer")
-    print(isPlayer)
-    print(type(isPlayer))
     
 
     if isPlayer:
-
         user_exists = Player.query.filter_by(email=email).first() is not None
     else:
         user_exists = User.query.filter_by(email=email).first() is not None
 
     if user_exists:
-        
         if isPlayer:
             user = Player.query.filter_by(email=email).first()
         else:
@@ -255,6 +249,10 @@ def get_all_tournaments():
     all_tournaments = Tournament.query.all()
     results = tournaments_schema.dump(all_tournaments)
     sorted_data = sorted(results, key=lambda x: x['date'])
+    # add signed teams to data
+    for d in sorted_data:
+        d['signed_teams'] = get_teams(d['id'])        
+    
     return jsonify(sorted_data)
 
 @app.route("/get/<id>/", methods=["GET"])
@@ -512,31 +510,20 @@ def delete_team():
 
     return jsonify({"message":"Team succesfully deleted"}), 200
 
-@app.route("/get_teams/<tournament_id>/", methods=["GET"])
 def get_teams(tournament_id):
-    # tournament_id = request.json.get("tournament_id", None)
-    print("tournament_id")    
-    print(tournament_id)    
     tournament = Tournament.query.filter(Tournament.id==tournament_id).first()
     signed_teams = []
     for found_team in tournament.signed_teams:
         player1 = Player.query.filter(Player.id==found_team.player_id).first()
-        print(player1.name,player1.surname)
-        print(found_team.teammate_name,found_team.teammate_surname)
-        print("-----------------------------------")
         signed_teams.append({
+            "signed_player_id": found_team.player_id,
             "player1_name": player1.name,
-            "player1_surname": player1.name,
+            "player1_surname": player1.surname,
             "player2_name": found_team.teammate_name,
             "player2_surname": found_team.teammate_surname,
         })
     
-    return jsonify(signed_teams), 200
+    return signed_teams
 
 if __name__ == "__main__":
-    app.run()
-#     # tm = TournamentManagement()
-#     # tm.run_all_scrapers()
-#     # for tour in tm.tournament_list:
-#     #     print(tour)
-#     #     print()
+    app.run(debug=True)
