@@ -492,8 +492,9 @@ def create_team():
     tournament_id = request.json.get("tournament_id", None)
     teammate_name = request.json.get("teammate_name", None)
     teammate_surname = request.json.get("teammate_surname", None)
+    date_signed = request.json.get("date_signed", None)
     
-    new_team = SignedTeam(player_id=player_id,tournament_id=tournament_id,teammate_name=teammate_name,teammate_surname=teammate_surname)
+    new_team = SignedTeam(player_id=player_id,tournament_id=tournament_id,teammate_name=teammate_name,teammate_surname=teammate_surname,date_signed=date_signed)
     db.session.add(new_team)
     db.session.commit()
 
@@ -531,6 +532,7 @@ def get_teams():
                 "player1_surname": player1.surname,
                 "player2_name": found_team.teammate_name,
                 "player2_surname": found_team.teammate_surname,
+                "date_signed": found_team.date_signed,
             })
         all_tournaments_teams[tournament.id] = {"teams":signed_teams, "isSigned":isSigned}
         
