@@ -66,6 +66,7 @@ class SignedTeam(db.Model):
     tournament_id = db.Column(db.String(32), db.ForeignKey('tournament.id'), primary_key=True)
     teammate_name = db.Column(db.String(345),nullable=False,default="unknown")
     teammate_surname = db.Column(db.String(345),nullable=False,default="unknown")
+    date_signed = db.Column(db.DateTime)
 
     # Define the relationships to the Player and Tournament tables
     player = db.relationship('Player', back_populates='signed_teams')
