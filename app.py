@@ -540,5 +540,20 @@ def get_teams():
         
     return jsonify(all_tournaments_teams),200
 
+@app.route("/get_players_tournaments/<player_id>/", methods=["GET"])
+def get_players_tournaments(player_id):
+    print(player_id)
+    print("player_id")
+    players_tournaments = []
+    all_tournaments = Tournament.query.all()
+    for tournament in all_tournaments:
+        for team in tournament.signed_teams:
+            if team.player_id == player_id:
+                players_tournaments.append(tournament)
+                break
+    
+    results = tournaments_schema.dump(players_tournaments)      
+    return jsonify(results),200
+
 if __name__ == "__main__":
     app.run(debug=True)
