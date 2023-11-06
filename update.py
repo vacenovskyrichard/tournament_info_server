@@ -1,6 +1,6 @@
 from Tournaments import TournamentManagement
 from datetime import date, datetime
-from models import db, Tournament
+from models import db, Tournament,SignedTeam
 from flask import Flask
 
 app = Flask(__name__)
@@ -18,8 +18,7 @@ def add_to_database(tournament):
         tournament (Tournament): tournament to be added or updated
     """
     date_format = "%Y-%m-%d"
-    
-    #TODO why is this here?
+
     if isinstance(tournament.date, str):
         tournament.date = datetime.strptime(tournament.date, date_format)
     if isinstance(tournament.last_update, str):
@@ -55,8 +54,14 @@ def add_to_database(tournament):
 
 def delete_old_tournaments():
     old_tournaments = db.session.query(Tournament).filter(Tournament.date < date.today()).all()
+    
     for t in old_tournaments:
-        print("tournament to be deleted: " + str(t))
+        print("Tournament to be deleted: " + str(t))
+        signed_teams = db.session.query(SignedTeam).filter(SignedTeam.tournament_id == t.id).all()    
+        print("     Delete signed teams:")
+        for team in signed_teams:
+            print(f"         {team.player_id} / {team.teammate_name} {team.teammate_surname}")
+            db.session.delete(team)
         db.session.delete(t)
     db.session.commit()
 

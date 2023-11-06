@@ -271,6 +271,7 @@ def add_tournament():
         city=new_tournament["city"],
         areal=new_tournament["areal"],
         capacity=new_tournament["capacity"],
+        signed=0,
         price=new_tournament["price"],
         start=new_tournament["start"],
         organizer=new_tournament["organizer"],
@@ -321,7 +322,7 @@ def update_tournament(id):
     tournament_to_update.last_update=datetime.now()
     db.session.commit()
 
-    return tournament_schema.jsonify(tournament_to_update)
+    return tournament_schema.jsonify(tournament_to_update),200
 
 @app.route("/delete/<id>/", methods=["DELETE"])
 @jwt_required()
