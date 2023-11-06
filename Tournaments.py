@@ -544,7 +544,7 @@ class TournamentManagement():
                 tournament_date = datetime.strptime((element['startdate'].split("T"))[0], "%Y-%m-%d")
                 start = f"{element['starttime']['h']}:{element['starttime']['i']}"
                 capacity = element['capacity']
-                signed = element['teams']
+                signed = element['member_count']
                 tournament_areal = element['facility_name']
                 price = element['price']
                 tournament_city = "Praha"
