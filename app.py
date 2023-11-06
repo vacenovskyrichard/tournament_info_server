@@ -318,7 +318,9 @@ def update_tournament(id):
     if "level" in received_tournament:
         tournament_to_update.level = received_tournament["level"]
     if "link" in received_tournament:
-        tournament_to_update.link = received_tournament["link"]
+        tournament_to_update.link = received_tournament["link"]    
+    if "registration_enabled" in received_tournament:
+        tournament_to_update.registration_enabled = received_tournament["registration_enabled"]
     tournament_to_update.last_update=datetime.now()
     db.session.commit()
 
