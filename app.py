@@ -85,16 +85,43 @@ def refresh_expiring_jwts(response):
         return response
 
 
+# @app.route("/login", methods=["POST"])
+# def login():
+#     email = request.json.get("email", None)
+#     password = request.json.get("password", None)
+#     isPlayer = request.json.get("isPlayer", None)
+    
+#     if isPlayer:
+#         user = Player.query.filter_by(email=email).first()
+#     else:
+#         user = User.query.filter_by(email=email).first()
+
+#     if user is None:
+#         return jsonify({"error": "Unauthorized"}), 401
+
+#     if not bcrypt.check_password_hash(user.password, password):
+#         return jsonify({"error": "Unauthorized"}), 401
+
+#     response = jsonify({"msg": "login successful"})
+#     access_token = create_access_token(identity=user.id)
+    
+#     response = {"access_token": access_token}
+#     return jsonify(response), 200
+
 @app.route("/login", methods=["POST"])
 def login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
     isPlayer = request.json.get("isPlayer", None)
-    
+    role = "basic"    
     if isPlayer:
         user = Player.query.filter_by(email=email).first()
+        role = "player"
     else:
         user = User.query.filter_by(email=email).first()
+        role = user.role
+
+
 
     if user is None:
         return jsonify({"error": "Unauthorized"}), 401
@@ -103,10 +130,122 @@ def login():
         return jsonify({"error": "Unauthorized"}), 401
 
     response = jsonify({"msg": "login successful"})
-    access_token = create_access_token(identity=user.id)
+    accessToken = create_access_token(identity=user.id)
     
-    response = {"access_token": access_token}
+    
+    response = {
+    "accessToken": accessToken,
+    "id": user.id,
+    "role": role,
+    "email": user.email,
+    "name": user.name,
+    "surname": user.surname,
+  }
     return jsonify(response), 200
+
+@app.route("/google_login", methods=["POST"])
+def google_login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    name = request.json.get("name", None)
+    surname = request.json.get("surname", None)
+    isPlayer = request.json.get("isPlayer", None)
+    
+    if isPlayer:
+        user_exists = Player.query.filter_by(email=email).first() is not None
+    else:
+        user_exists = User.query.filter_by(email=email).first() is not None
+
+    if user_exists:
+        role = "basic"
+        if isPlayer:
+            user = Player.query.filter_by(email=email).first()
+            role = "player"
+        else:
+            user = User.query.filter_by(email=email).first()
+            role = user.role
+            
+
+        if not bcrypt.check_password_hash(user.password, password):
+            return jsonify({"error": "Unauthorized"}), 401
+
+        accessToken = create_access_token(identity=user.id)
+        response = {
+            "accessToken": accessToken,
+            "id": user.id,
+            "role": role,
+            "email": user.email,
+            "name": user.name,
+            "surname": user.surname,
+        }
+        return jsonify(response), 200    
+
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+    
+    role = "basic"
+    if isPlayer:
+        new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
+        role = "player"
+    else:
+        new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+        
+    db.session.add(new_user)
+    db.session.commit()
+    
+    accessToken = create_access_token(identity=new_user.id)
+    
+    response = {
+    "accessToken": accessToken,
+    "id": user.id,
+    "role": role,
+    "email": user.email,
+    "name": user.name,
+    "surname": user.surname,
+  }
+    return jsonify(response), 200   
+
+# @app.route("/google_login", methods=["POST"])
+# def google_login():
+#     email = request.json.get("email", None)
+#     password = request.json.get("password", None)
+#     name = request.json.get("name", None)
+#     surname = request.json.get("surname", None)
+#     isPlayer = request.json.get("isPlayer", None)
+    
+
+#     if isPlayer:
+#         user_exists = Player.query.filter_by(email=email).first() is not None
+#     else:
+#         user_exists = User.query.filter_by(email=email).first() is not None
+
+#     if user_exists:
+#         if isPlayer:
+#             user = Player.query.filter_by(email=email).first()
+#         else:
+#             user = User.query.filter_by(email=email).first()
+        
+
+#         if not bcrypt.check_password_hash(user.password, password):
+#             return jsonify({"error": "Unauthorized"}), 401
+
+#         access_token = create_access_token(identity=user.id)
+#         response = {"access_token": access_token}
+#         return jsonify(response), 200    
+
+#     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        
+#     if isPlayer:
+#         new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
+#     else:
+#         new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+        
+    
+#     db.session.add(new_user)
+#     db.session.commit()
+    
+#     access_token = create_access_token(identity=new_user.id)
+#     response = {"access_token": access_token}
+#     return jsonify(response), 200    
 
 @app.route("/reset", methods=["POST"])
 def reset_password():
@@ -163,49 +302,6 @@ def register_user():
     db.session.commit()
 
     return email, 200
-
-@app.route("/google_login", methods=["POST"])
-def google_login():
-    email = request.json.get("email", None)
-    password = request.json.get("password", None)
-    name = request.json.get("name", None)
-    surname = request.json.get("surname", None)
-    isPlayer = request.json.get("isPlayer", None)
-    
-
-    if isPlayer:
-        user_exists = Player.query.filter_by(email=email).first() is not None
-    else:
-        user_exists = User.query.filter_by(email=email).first() is not None
-
-    if user_exists:
-        if isPlayer:
-            user = Player.query.filter_by(email=email).first()
-        else:
-            user = User.query.filter_by(email=email).first()
-        
-
-        if not bcrypt.check_password_hash(user.password, password):
-            return jsonify({"error": "Unauthorized"}), 401
-
-        access_token = create_access_token(identity=user.id)
-        response = {"access_token": access_token}
-        return jsonify(response), 200    
-
-    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-        
-    if isPlayer:
-        new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
-    else:
-        new_user = User(email=email, password=hashed_password,name=name,surname=surname)
-        
-    
-    db.session.add(new_user)
-    db.session.commit()
-    
-    access_token = create_access_token(identity=new_user.id)
-    response = {"access_token": access_token}
-    return jsonify(response), 200    
 
 @app.route("/logout", methods=["POST"])
 def logout():
