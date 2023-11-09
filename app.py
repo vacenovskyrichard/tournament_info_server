@@ -503,27 +503,34 @@ def get_user_info():
     print(response)
     return jsonify(response), 200
 
-@app.route('/ical.feed/<city>/<areal>/<category>/<level>/', methods=["GET"])
-def calendar_feed(city,areal,category,level):
+# @app.route('/ical.feed/<city>/<areal>/<category>/<level>/', methods=["GET"])
+# def calendar_feed(city,areal,category,level):
+@app.route('/ical.feed', methods=["GET"])
+def calendar_feed():
+    city = request.args.get("city")
+    areal = request.args.get("areal")
+    category = request.args.get("category")
+    level = request.args.get("level")
+
     filter_conditions = []
-    if city != "none":
+    if city:
         filter_subconditions = []
         for c in city.split(";"):
             filter_subconditions.append((getattr(Tournament, "city") == c))
         filter_conditions.append(db.or_(*filter_subconditions))
-    if areal != "none":
+    if areal:
         filter_subconditions = []
         for a in areal.split(";"):
             filter_subconditions.append((getattr(Tournament, "areal") == a))
         filter_conditions.append(db.or_(*filter_subconditions))
-    if category != "none":
+    if category:
         filter_subconditions = []
         for c in category.split(";"):
             print("c")
             print(c)
             filter_subconditions.append((getattr(Tournament, "category") == c))
         filter_conditions.append(db.or_(*filter_subconditions))
-    if level != "none":
+    if level:
         filter_subconditions = []
         for l in level.split(";"):
             filter_subconditions.append((getattr(Tournament, "level") == l))
@@ -552,10 +559,6 @@ def calendar_feed(city,areal,category,level):
         event.url = res.link    
         # Add the event to the calendar
         c.events.add(event)    
-    
-    # Generate the ICS feed
-    # ics_feed = c.serialize()
-    # return Response(ics_feed, content_type='text/calendar; charset=utf-8')
     
     ics_feed = c.serialize()
 
