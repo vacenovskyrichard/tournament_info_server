@@ -85,16 +85,43 @@ def refresh_expiring_jwts(response):
         return response
 
 
+# @app.route("/login", methods=["POST"])
+# def login():
+#     email = request.json.get("email", None)
+#     password = request.json.get("password", None)
+#     isPlayer = request.json.get("isPlayer", None)
+    
+#     if isPlayer:
+#         user = Player.query.filter_by(email=email).first()
+#     else:
+#         user = User.query.filter_by(email=email).first()
+
+#     if user is None:
+#         return jsonify({"error": "Unauthorized"}), 401
+
+#     if not bcrypt.check_password_hash(user.password, password):
+#         return jsonify({"error": "Unauthorized"}), 401
+
+#     response = jsonify({"msg": "login successful"})
+#     access_token = create_access_token(identity=user.id)
+    
+#     response = {"access_token": access_token}
+#     return jsonify(response), 200
+
 @app.route("/login", methods=["POST"])
 def login():
     email = request.json.get("email", None)
     password = request.json.get("password", None)
     isPlayer = request.json.get("isPlayer", None)
-    
+    role = "basic"    
     if isPlayer:
         user = Player.query.filter_by(email=email).first()
+        role = "player"
     else:
         user = User.query.filter_by(email=email).first()
+        role = user.role
+
+
 
     if user is None:
         return jsonify({"error": "Unauthorized"}), 401
@@ -103,10 +130,122 @@ def login():
         return jsonify({"error": "Unauthorized"}), 401
 
     response = jsonify({"msg": "login successful"})
-    access_token = create_access_token(identity=user.id)
+    accessToken = create_access_token(identity=user.id)
     
-    response = {"access_token": access_token}
+    
+    response = {
+    "accessToken": accessToken,
+    "id": user.id,
+    "role": role,
+    "email": user.email,
+    "name": user.name,
+    "surname": user.surname,
+  }
     return jsonify(response), 200
+
+@app.route("/google_login", methods=["POST"])
+def google_login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+    name = request.json.get("name", None)
+    surname = request.json.get("surname", None)
+    isPlayer = request.json.get("isPlayer", None)
+    
+    if isPlayer:
+        user_exists = Player.query.filter_by(email=email).first() is not None
+    else:
+        user_exists = User.query.filter_by(email=email).first() is not None
+
+    if user_exists:
+        role = "basic"
+        if isPlayer:
+            user = Player.query.filter_by(email=email).first()
+            role = "player"
+        else:
+            user = User.query.filter_by(email=email).first()
+            role = user.role
+            
+
+        if not bcrypt.check_password_hash(user.password, password):
+            return jsonify({"error": "Unauthorized"}), 401
+
+        accessToken = create_access_token(identity=user.id)
+        response = {
+            "accessToken": accessToken,
+            "id": user.id,
+            "role": role,
+            "email": user.email,
+            "name": user.name,
+            "surname": user.surname,
+        }
+        return jsonify(response), 200    
+
+    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+    
+    role = "basic"
+    if isPlayer:
+        new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
+        role = "player"
+    else:
+        new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+        
+    db.session.add(new_user)
+    db.session.commit()
+    
+    accessToken = create_access_token(identity=new_user.id)
+    
+    response = {
+    "accessToken": accessToken,
+    "id": user.id,
+    "role": role,
+    "email": user.email,
+    "name": user.name,
+    "surname": user.surname,
+  }
+    return jsonify(response), 200   
+
+# @app.route("/google_login", methods=["POST"])
+# def google_login():
+#     email = request.json.get("email", None)
+#     password = request.json.get("password", None)
+#     name = request.json.get("name", None)
+#     surname = request.json.get("surname", None)
+#     isPlayer = request.json.get("isPlayer", None)
+    
+
+#     if isPlayer:
+#         user_exists = Player.query.filter_by(email=email).first() is not None
+#     else:
+#         user_exists = User.query.filter_by(email=email).first() is not None
+
+#     if user_exists:
+#         if isPlayer:
+#             user = Player.query.filter_by(email=email).first()
+#         else:
+#             user = User.query.filter_by(email=email).first()
+        
+
+#         if not bcrypt.check_password_hash(user.password, password):
+#             return jsonify({"error": "Unauthorized"}), 401
+
+#         access_token = create_access_token(identity=user.id)
+#         response = {"access_token": access_token}
+#         return jsonify(response), 200    
+
+#     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
+        
+#     if isPlayer:
+#         new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
+#     else:
+#         new_user = User(email=email, password=hashed_password,name=name,surname=surname)
+        
+    
+#     db.session.add(new_user)
+#     db.session.commit()
+    
+#     access_token = create_access_token(identity=new_user.id)
+#     response = {"access_token": access_token}
+#     return jsonify(response), 200    
 
 @app.route("/reset", methods=["POST"])
 def reset_password():
@@ -163,49 +302,6 @@ def register_user():
     db.session.commit()
 
     return email, 200
-
-@app.route("/google_login", methods=["POST"])
-def google_login():
-    email = request.json.get("email", None)
-    password = request.json.get("password", None)
-    name = request.json.get("name", None)
-    surname = request.json.get("surname", None)
-    isPlayer = request.json.get("isPlayer", None)
-    
-
-    if isPlayer:
-        user_exists = Player.query.filter_by(email=email).first() is not None
-    else:
-        user_exists = User.query.filter_by(email=email).first() is not None
-
-    if user_exists:
-        if isPlayer:
-            user = Player.query.filter_by(email=email).first()
-        else:
-            user = User.query.filter_by(email=email).first()
-        
-
-        if not bcrypt.check_password_hash(user.password, password):
-            return jsonify({"error": "Unauthorized"}), 401
-
-        access_token = create_access_token(identity=user.id)
-        response = {"access_token": access_token}
-        return jsonify(response), 200    
-
-    hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
-        
-    if isPlayer:
-        new_user = Player(email=email, password=hashed_password,name=name,surname=surname)
-    else:
-        new_user = User(email=email, password=hashed_password,name=name,surname=surname)
-        
-    
-    db.session.add(new_user)
-    db.session.commit()
-    
-    access_token = create_access_token(identity=new_user.id)
-    response = {"access_token": access_token}
-    return jsonify(response), 200    
 
 @app.route("/logout", methods=["POST"])
 def logout():
@@ -407,27 +503,34 @@ def get_user_info():
     print(response)
     return jsonify(response), 200
 
-@app.route('/ical.feed/<city>/<areal>/<category>/<level>/', methods=["GET"])
-def calendar_feed(city,areal,category,level):
+# @app.route('/ical.feed/<city>/<areal>/<category>/<level>/', methods=["GET"])
+# def calendar_feed(city,areal,category,level):
+@app.route('/ical.feed', methods=["GET"])
+def calendar_feed():
+    city = request.args.get("city")
+    areal = request.args.get("areal")
+    category = request.args.get("category")
+    level = request.args.get("level")
+
     filter_conditions = []
-    if city != "none":
+    if city:
         filter_subconditions = []
         for c in city.split(";"):
             filter_subconditions.append((getattr(Tournament, "city") == c))
         filter_conditions.append(db.or_(*filter_subconditions))
-    if areal != "none":
+    if areal:
         filter_subconditions = []
         for a in areal.split(";"):
             filter_subconditions.append((getattr(Tournament, "areal") == a))
         filter_conditions.append(db.or_(*filter_subconditions))
-    if category != "none":
+    if category:
         filter_subconditions = []
         for c in category.split(";"):
             print("c")
             print(c)
             filter_subconditions.append((getattr(Tournament, "category") == c))
         filter_conditions.append(db.or_(*filter_subconditions))
-    if level != "none":
+    if level:
         filter_subconditions = []
         for l in level.split(";"):
             filter_subconditions.append((getattr(Tournament, "level") == l))
@@ -456,10 +559,6 @@ def calendar_feed(city,areal,category,level):
         event.url = res.link    
         # Add the event to the calendar
         c.events.add(event)    
-    
-    # Generate the ICS feed
-    # ics_feed = c.serialize()
-    # return Response(ics_feed, content_type='text/calendar; charset=utf-8')
     
     ics_feed = c.serialize()
 
@@ -517,7 +616,6 @@ def delete_team():
 
 
 @app.route("/get_teams", methods=["POST"])
-@jwt_required()
 def get_teams():
     user_id = request.json.get("userId", None)
     all_tournaments = Tournament.query.all()
@@ -539,6 +637,21 @@ def get_teams():
         all_tournaments_teams[tournament.id] = {"teams":signed_teams, "isSigned":isSigned}
         
     return jsonify(all_tournaments_teams),200
+
+@app.route("/get_players_tournaments/<player_id>/", methods=["GET"])
+def get_players_tournaments(player_id):
+    print(player_id)
+    print("player_id")
+    players_tournaments = []
+    all_tournaments = Tournament.query.all()
+    for tournament in all_tournaments:
+        for team in tournament.signed_teams:
+            if team.player_id == player_id:
+                players_tournaments.append(tournament)
+                break
+    
+    results = tournaments_schema.dump(players_tournaments)      
+    return jsonify(results),200
 
 if __name__ == "__main__":
     app.run(debug=True)
