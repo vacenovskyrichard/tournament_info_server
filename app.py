@@ -616,7 +616,6 @@ def delete_team():
 
 
 @app.route("/get_teams", methods=["POST"])
-@jwt_required()
 def get_teams():
     user_id = request.json.get("userId", None)
     all_tournaments = Tournament.query.all()
