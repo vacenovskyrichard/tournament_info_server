@@ -115,7 +115,7 @@ class TournamentManagement():
             return False
         
     def get_pbt_data(self,attempt):
-        tournament_areal = "Prague Beach Team (Střešovice)"
+        tournament_areal = "PBT Střešovice"
         tournament_city = "Praha"
         url = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
         if attempt == 0:
@@ -315,7 +315,7 @@ class TournamentManagement():
         return True
     
     def get_michalek_data(self):
-        tournament_areal = "Prague Beach Team (Střešovice)"
+        tournament_areal = "PBT Střešovice"
         tournament_city = "Praha"
         url = "https://michalek-beach.rezervuju.cz/training?event_group_id=36"
         self.custom_log_manager.log_delimiter()
