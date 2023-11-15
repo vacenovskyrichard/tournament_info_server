@@ -114,98 +114,146 @@ class TournamentManagement():
             self.logger.error("Open chrom with url failed.")
             return False
         
-    def get_pbt_data(self,attempt):
-        tournament_areal = "PBT Střešovice"
-        tournament_city = "Praha"
-        url = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
-        if attempt == 0:
-            self.custom_log_manager.log_delimiter()
-            self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
+    # def get_pbt_data(self,attempt):
+    #     tournament_areal = "PBT Střešovice"
+    #     tournament_city = "Praha"
+    #     url = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
+    #     if attempt == 0:
+    #         self.custom_log_manager.log_delimiter()
+    #         self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal}.\n")
         
-        if not self.open_chrome_with_url(url):
-            return False
+    #     if not self.open_chrome_with_url(url):
+    #         return False
         
-        try:
-            WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
-            tournaments_clickable = self.driver.find_elements(By.CLASS_NAME, "fa-chevron-right")
-        except:
-            self.logger.error(f"Failed to get main content.")
-            tm.sleep(10)
-            self.driver.quit()
-            return False
+    #     try:
+    #         WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
+    #         tournaments_clickable = self.driver.find_elements(By.CLASS_NAME, "fa-chevron-right")
+    #     except:
+    #         self.logger.error(f"Failed to get main content.")
+    #         tm.sleep(10)
+    #         self.driver.quit()
+    #         return False
                     
-        # Get css selectors for each tournament
-        number_of_tournaments = len(tournaments_clickable)
-        if attempt == 0:
-            self.total_found_tournaments += number_of_tournaments
+    #     # Get css selectors for each tournament
+    #     number_of_tournaments = len(tournaments_clickable)
+    #     if attempt == 0:
+    #         self.total_found_tournaments += number_of_tournaments
         
        
-        if number_of_tournaments > 0:
-            self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
-        else:
-            self.custom_log_manager.info_message_only(f"   No turnaments in this areal.\n")
-            self.driver.quit()
-            return True
+    #     if number_of_tournaments > 0:
+    #         self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
+    #     else:
+    #         self.custom_log_manager.info_message_only(f"   No turnaments in this areal.\n")
+    #         self.driver.quit()
+    #         return True
         
-        for i in range(number_of_tournaments):
-            tm.sleep(3)
-            if not self.open_chrome_with_url(url):
-                return False
-            try:
-                WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
-                self.driver.find_elements(By.CLASS_NAME, "fa-chevron-right")[i].click()
-            except:
-                self.logger.error("Failed to get tournament element clickable.")
-                tm.sleep(10)
-                self.driver.quit()
-                return False
+    #     for i in range(number_of_tournaments):
+    #         tm.sleep(3)
+    #         if not self.open_chrome_with_url(url):
+    #             return False
+    #         try:
+    #             WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".MuiList-root")))  
+    #             self.driver.find_elements(By.CLASS_NAME, "fa-chevron-right")[i].click()
+    #         except:
+    #             self.logger.error("Failed to get tournament element clickable.")
+    #             tm.sleep(10)
+    #             self.driver.quit()
+    #             return False
             
-            self.custom_log_manager.info_message_only(f"   Processing tournament {i+1}/{number_of_tournaments}")
-            self.custom_log_manager.info_message_only('   Scraping...')
+    #         self.custom_log_manager.info_message_only(f"   Processing tournament {i+1}/{number_of_tournaments}")
+    #         self.custom_log_manager.info_message_only('   Scraping...')
             
-            try:
-                field_section = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".fieldsSection")))
-                details = field_section.find_elements(By.CLASS_NAME,"value")
-            except:
-                self.logger.error("Failed to get tournament detail.")
-                tm.sleep(10)
-                self.driver.quit()
-                return False
-            try:
-                tournament_name = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.title"))).text
-                signed, capacity = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.capacity  "))).text.split('/')
-            except:
-                self.logger.error("Failed to get tournament name and capacity.")
-                tm.sleep(10)
-                self.driver.quit()
-                return False
+    #         try:
+    #             field_section = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, ".fieldsSection")))
+    #             details = field_section.find_elements(By.CLASS_NAME,"value")
+    #         except:
+    #             self.logger.error("Failed to get tournament detail.")
+    #             tm.sleep(10)
+    #             self.driver.quit()
+    #             return False
+    #         try:
+    #             tournament_name = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.title"))).text
+    #             signed, capacity = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "p.capacity  "))).text.split('/')
+    #         except:
+    #             self.logger.error("Failed to get tournament name and capacity.")
+    #             tm.sleep(10)
+    #             self.driver.quit()
+    #             return False
             
-            link = "https://www.praguebeachteam.cz/?menu=open-turnaje"
-            category = self.get_category_by_name(tournament_name)
-            level = self.get_level_by_name(tournament_name)
-            organizer = details[1].text.split(",")[0]
-            date_with_day_str, start = details[2].text.split(", ")
-            tournament_date_str = date_with_day_str.split()[1].strip()
-            tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
-            start = start.strip()
+    #         link = "https://www.praguebeachteam.cz/?menu=open-turnaje"
+    #         category = self.get_category_by_name(tournament_name)
+    #         level = self.get_level_by_name(tournament_name)
+    #         organizer = details[1].text.split(",")[0]
+    #         date_with_day_str, start = details[2].text.split(", ")
+    #         tournament_date_str = date_with_day_str.split()[1].strip()
+    #         tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
+    #         start = start.strip()
             
-            # Use re.findall to find all matching numbers in the string
-            numbers = re.findall(r'\d+', details[3].text)
+    #         # Use re.findall to find all matching numbers in the string
+    #         numbers = re.findall(r'\d+', details[3].text)
 
-            # Convert the matched numbers to integers
-            numbers = [int(number) for number in numbers]
-            price = max(numbers)   
-            last_update = datetime.now()
-            self.tournament_set.add(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
-            )
+    #         # Convert the matched numbers to integers
+    #         numbers = [int(number) for number in numbers]
+    #         price = max(numbers)   
+    #         last_update = datetime.now()
+    #         self.tournament_set.add(
+    #             TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
+    #         )
 
-            self.driver.quit()
-            self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
+    #         self.driver.quit()
+    #         self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
+    #         self.custom_log_manager.info_message_only('')
+    #         self.driver.quit()
+            
+    #     self.driver.quit()
+    #     return True
+
+    def get_pbt_data(self):
+        self.custom_log_manager.log_delimiter()
+        self.custom_log_manager.info_message_only(f"\nPBT Střešovice:.\n")
+        url = "http://www.praguebeachteam.cz/rest/event?fromDate=2023-10-10&toDate=2024-10-10&types=OT"
+        response = requests.get(url)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            data = json.loads(response.text)
+            number_of_tournaments = len(data)
+            if number_of_tournaments > 0:
+                self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
+            else:
+                self.custom_log_manager.info_message_only(f"   No turnaments in category {url}.\n")
+                return True
+            self.total_found_tournaments += number_of_tournaments
+            # Access the fields for each element in the 'data' list
+            for element in data:
+                # print(element)
+                # print("=========================")
+                tournament_name = element['name']
+                # Extract the date string from the given format
+                
+                date_string = element["fromDate"].replace("__DATETIME__", "")
+                # Parse the date string into a datetime object
+                tournament_date = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ") + timedelta(hours=1)
+
+                start = tournament_date.strftime("%H:%M")
+                capacity = element['capacity']
+                signed = len(element["bookings"])
+                tournament_areal = "PBT Střešovice"
+                price = element['nonMemberPrice']
+                tournament_city = "Praha"
+                category = element["category"]
+                level = self.get_level_by_name(tournament_name)
+                link = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
+                organizer = element["organizerName"]
+                last_update = datetime.now()
+                self.tournament_set.add(
+                    TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
+                )
+            self.custom_log_manager.info_message_only('   Data fetched succesfuly!')
             self.custom_log_manager.info_message_only('')
-            self.driver.quit()
-            
-        self.driver.quit()
+        else:
+            self.custom_log_manager.info_message_only('   Failed to get data from API')
+            return False
         return True
 
     def get_ladvi_data(self):
@@ -569,19 +617,24 @@ class TournamentManagement():
         start_time = datetime.now().replace(microsecond=0)
         self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
    
-        for attempt in range(5):
-            if self.get_pbt_data(attempt):
-                break 
+        # for attempt in range(5):
+        #     if self.get_pbt_data(attempt):
+        #         break 
 
+
+        # Scrapers
         # self.get_cvf_data()
         self.get_ladvi_data()
         self.get_michalek_data()
         self.get_pankrac_data()
-        self.get_bvsp_data()
         
-        # for tour in self.tournament_set:
-        #     print(tour)
-        #     print()
+        # APIs
+        self.get_bvsp_data()
+        self.get_pbt_data()
+        
+        for tour in self.tournament_set:
+            print(tour)
+            print()
         
         
         number_of_tournaments = len(self.tournament_set)
@@ -598,6 +651,12 @@ class TournamentManagement():
         with open("./tournaments.json", "w") as outfile:
             json.dump(list(self.tournament_set), outfile, ensure_ascii=False)
 
+
+
+# if __name__ == "__main__":
+#     tm = TournamentManagement()
+#     tm.run_all_scrapers()
+                
     # print("======================================================")
     # print("tournament_name")
     # print(tournament_name)
