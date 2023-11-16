@@ -208,54 +208,6 @@ class TournamentManagement():
     #     self.driver.quit()
     #     return True
 
-    def get_pbt_data(self):
-        self.custom_log_manager.log_delimiter()
-        self.custom_log_manager.info_message_only(f"\nPBT Střešovice:.\n")
-        url = "http://www.praguebeachteam.cz/rest/event?fromDate=2023-10-10&toDate=2024-10-10&types=OT"
-        response = requests.get(url)
-
-        # Check if the request was successful (status code 200)
-        if response.status_code == 200:
-            data = json.loads(response.text)
-            number_of_tournaments = len(data)
-            if number_of_tournaments > 0:
-                self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
-            else:
-                self.custom_log_manager.info_message_only(f"   No turnaments in category {url}.\n")
-                return True
-            self.total_found_tournaments += number_of_tournaments
-            # Access the fields for each element in the 'data' list
-            for element in data:
-                # print(element)
-                # print("=========================")
-                tournament_name = element['name']
-                # Extract the date string from the given format
-                
-                date_string = element["fromDate"].replace("__DATETIME__", "")
-                # Parse the date string into a datetime object
-                tournament_date = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ") + timedelta(hours=1)
-
-                start = tournament_date.strftime("%H:%M")
-                capacity = element['capacity']
-                signed = len(element["bookings"])
-                tournament_areal = "PBT Střešovice"
-                price = element['nonMemberPrice']
-                tournament_city = "Praha"
-                category = element["category"]
-                level = self.get_level_by_name(tournament_name)
-                link = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
-                organizer = element["organizerName"]
-                last_update = datetime.now()
-                self.tournament_set.add(
-                    TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
-                )
-            self.custom_log_manager.info_message_only('   Data fetched succesfuly!')
-            self.custom_log_manager.info_message_only('')
-        else:
-            self.custom_log_manager.info_message_only('   Failed to get data from API')
-            return False
-        return True
-
     def get_ladvi_data(self):
         tournament_areal = "Beachklub Ládví"
         tournament_city = "Praha"
@@ -613,6 +565,57 @@ class TournamentManagement():
             return False
         return True
 
+    def get_pbt_data(self):
+        self.custom_log_manager.log_delimiter()
+        self.custom_log_manager.info_message_only(f"\nPBT Střešovice:.\n")
+        fromDate = datetime.now().strftime("%Y-%m-%d")
+        toDate = (datetime.now() + timedelta(days=360)).strftime("%Y-%m-%d")
+        
+        url = f"http://www.praguebeachteam.cz/rest/event?fromDate={fromDate}&toDate={toDate}&types=OT"
+        response = requests.get(url)
+
+        # Check if the request was successful (status code 200)
+        if response.status_code == 200:
+            data = json.loads(response.text)
+            number_of_tournaments = len(data)
+            if number_of_tournaments > 0:
+                self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
+            else:
+                self.custom_log_manager.info_message_only(f"   No turnaments in category {url}.\n")
+                return True
+            self.total_found_tournaments += number_of_tournaments
+            # Access the fields for each element in the 'data' list
+            for element in data:
+                # print(element)
+                # print("=========================")
+                tournament_name = element['name']
+                # Extract the date string from the given format
+                
+                date_string = element["fromDate"].replace("__DATETIME__", "")
+                # Parse the date string into a datetime object
+                tournament_date = datetime.strptime(date_string, "%Y-%m-%dT%H:%M:%S.%fZ") + timedelta(hours=1)
+
+                start = tournament_date.strftime("%H:%M")
+                capacity = element['capacity']
+                signed = len(element["bookings"])
+                tournament_areal = "PBT Střešovice"
+                price = element['nonMemberPrice']
+                tournament_city = "Praha"
+                category = element["category"]
+                level = self.get_level_by_name(tournament_name)
+                link = "https://www.praguebeachteam.cz/mobile/#/embedded/anonymous/events/tournaments"
+                organizer = element["organizerName"]
+                last_update = datetime.now()
+                self.tournament_set.add(
+                    TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,link,last_update)
+                )
+            self.custom_log_manager.info_message_only('   Data fetched succesfuly!')
+            self.custom_log_manager.info_message_only('')
+        else:
+            self.custom_log_manager.info_message_only('   Failed to get data from API')
+            return False
+        return True
+
     def run_all_scrapers(self):
         start_time = datetime.now().replace(microsecond=0)
         self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
@@ -623,7 +626,7 @@ class TournamentManagement():
 
 
         # Scrapers
-        # self.get_cvf_data()
+        self.get_cvf_data()
         self.get_ladvi_data()
         self.get_michalek_data()
         self.get_pankrac_data()
@@ -632,9 +635,9 @@ class TournamentManagement():
         self.get_bvsp_data()
         self.get_pbt_data()
         
-        for tour in self.tournament_set:
-            print(tour)
-            print()
+        # for tour in self.tournament_set:
+        #     print(tour)
+        #     print()
         
         
         number_of_tournaments = len(self.tournament_set)
