@@ -41,6 +41,7 @@ def add_to_database(tournament):
     
     if found_tournament:
         found_tournament.capacity = tournament.capacity
+        found_tournament.category = tournament.category
         found_tournament.signed = tournament.signed
         found_tournament.price = tournament.price
         found_tournament.start = tournament.start
