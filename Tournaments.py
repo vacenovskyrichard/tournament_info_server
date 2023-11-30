@@ -421,7 +421,7 @@ class TournamentManagement():
             signed, capacity = re.search(r'\d+/\d+', capacity_element.text).group(0).split("/")            
             last_update = datetime.now()
             self.tournament_set.add(
-                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,found_tournaments_urls[i],last_update)
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,found_tournaments_urls[tournament_id],last_update)
             )
             self.driver.quit()
             self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
@@ -532,7 +532,7 @@ class TournamentManagement():
 
 
         # Scrapers
-        self.get_cvf_data()
+        # self.get_cvf_data()
         self.get_ladvi_data()
         self.get_michalek_data()
         self.get_pankrac_data()
