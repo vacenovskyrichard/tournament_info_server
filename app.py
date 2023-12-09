@@ -611,5 +611,38 @@ def get_players_tournaments(player_id):
     results = tournaments_schema.dump(players_tournaments)      
     return jsonify(results),200
 
+
+@app.route("/change_password", methods=["POST"])
+@jwt_required()
+def change_password():
+    email = request.json.get("email", None)
+    isPlayer = request.json.get("isPlayer", None)
+    oldPassword = request.json.get("oldPassword", None)
+    newPassword = request.json.get("newPassword", None)
+    
+    
+    print("CREDENTIALS:")
+    print(email)
+    print(isPlayer)
+    print(oldPassword)
+    print(newPassword)
+    
+    
+    if isPlayer:
+        user = Player.query.filter_by(email=email).first()
+    else:
+        user = User.query.filter_by(email=email).first()
+    
+
+    if not bcrypt.check_password_hash(user.password, oldPassword):
+        return jsonify({"error": "Unauthorized"}), 401
+
+
+    user.password =  bcrypt.generate_password_hash(newPassword).decode("utf-8")
+    db.session.commit()
+    
+    return jsonify({"new_password": newPassword}), 200
+
+
 if __name__ == "__main__":
     app.run(debug=True)
