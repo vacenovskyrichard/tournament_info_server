@@ -507,7 +507,7 @@ def calendar_feed():
         date_format = "%Y-%m-%d-%H:%M"
         tournament_duration = timedelta(hours=8) if int(res.start.split(":")[0]) < 11 else timedelta(hours=4)
         
-        start_time = datetime.strptime(start_str, date_format) - timedelta(hours=1)
+        start_time = datetime.strptime(start_str, date_format)
         event = Event()
         event.name = res.name
         event.begin = start_time
