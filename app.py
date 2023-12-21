@@ -394,7 +394,7 @@ def delete_tournament_by_id(id):
 @app.route("/update", methods=["GET"])
 def update_database():
     tournaments = TournamentManagement()
-    found_tournaments = tournaments.run_all_scrapers()
+    found_tournaments = tournaments.get_all_data()
     for tournament in found_tournaments:
         add_to_database(
             Tournament(

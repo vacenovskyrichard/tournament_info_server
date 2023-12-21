@@ -522,7 +522,7 @@ class TournamentManagement():
             return False
         return True
 
-    def run_all_scrapers(self):
+    def get_all_data(self):
         start_time = datetime.now().replace(microsecond=0)
         self.custom_log_manager.info_message_only(f"---------------------------- New update started at {start_time} -------------------------")
    
@@ -564,7 +564,7 @@ class TournamentManagement():
 
 # if __name__ == "__main__":
 #     tm = TournamentManagement()
-#     tm.run_all_scrapers()
+#     tm.get_all_data()
                 
     # print("======================================================")
     # print("tournament_name")
