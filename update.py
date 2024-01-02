@@ -71,7 +71,7 @@ def update_database():
     # init tournament management class
     tm = TournamentManagement()
     # run web scraping
-    found_tournaments = tm.run_all_scrapers()
+    found_tournaments = tm.get_all_data()
     for tournament in found_tournaments:
         add_to_database(
             Tournament(
