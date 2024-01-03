@@ -92,6 +92,7 @@ class TournamentManagement():
 
     def open_chrome_with_url(self, url):
         testing = False
+        user_agent = "bot:turnajky.cz"
         try:
             if not testing:
                 service = Service(executable_path=os.environ.get("CHROMEDRIVER_PATH"))
@@ -102,6 +103,7 @@ class TournamentManagement():
             if not testing:
                 chrome_options.add_argument("--disable-dev-shm-usage")
                 chrome_options.add_argument("--no-sandbox")
+                chrome_options.add_argument(f'--user-agent={user_agent}')
                 self.driver = webdriver.Chrome(service=service, options=chrome_options)
             else:
                 self.driver = webdriver.Chrome(options=chrome_options)
@@ -589,3 +591,91 @@ class TournamentManagement():
     # print(signed)            
     # print("link")
     # print(link)
+    
+    
+    def get_michalek_data(self):
+        """Extracting data about tournaments of Ondrej Michalek. 
+
+        Returns:
+            bool: True if data was scraped succesfuly
+        """
+        
+        tournament_areal = "PBT Střešovice"
+        tournament_city = "Praha"
+        url = "https://michalek-beach.rezervuju.cz/training?event_group_id=36"
+        self.custom_log_manager.log_delimiter()
+        self.custom_log_manager.info_message_only(f"\nAreal: {tournament_areal} - Ondra Michálek.\n")
+        
+        if not self.open_chrome_with_url(url):
+            return False
+        
+        # get tourmament elements
+        try:
+            tournament_elements = self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")
+        except:
+            self.logger.error("Failed to get tourmament elements.")
+            return False
+        
+        number_of_tournaments:int = len(tournament_elements)
+        self.total_found_tournaments += number_of_tournaments
+        if number_of_tournaments > 0:
+            self.custom_log_manager.info_message_only(f"   Number of found tournaments: {number_of_tournaments}.\n")
+        else:
+            self.custom_log_manager.info_message_only(f"   No turnaments in this areal.\n")
+            self.driver.quit()
+            return True
+        
+        for tournament_id in range(number_of_tournaments):
+            self.custom_log_manager.info_message_only(f"   Processing tournament {tournament_id+1}/{number_of_tournaments}")
+            self.custom_log_manager.info_message_only('   Scraping...')
+            
+            if not self.open_chrome_with_url(url):
+                continue
+            
+            # get information which is on main page                
+            try:
+                tournament_element = self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")[tournament_id]
+                tournament_name = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_name").text
+                # self.custom_log_manager.info_message_only(f"   Tournament name: {tournament_name}")
+                day,month,year = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_date").text.split(" ")
+                tournament_date_str = f"{day}{CzechMonths(month).to_number()}.{year}"
+                tournament_date = datetime.strptime(tournament_date_str, "%d.%m.%Y")
+                capacity,signed = tournament_element.find_element(By.CLASS_NAME,"sf_admin_list_td_capacity_with_participations_count").text.split('/')
+
+            except:
+                self.logger.error("Failed to get info from main page.")
+                continue            
+            
+            # open detail of tournament
+            try:
+                self.driver.find_elements(By.CLASS_NAME,"sf_admin_row")[tournament_id].find_element(By.CLASS_NAME,"sf_admin_action_detail").click() 
+                tm.sleep(1)
+                
+                detail_description = self.driver.find_element(By.CLASS_NAME,"event_perex").text.lower()
+
+                category = self.get_category_by_name(tournament_name)
+
+                price_match = re.search(r'startovné (\d+)', detail_description)
+                price = "0"
+                if price_match:
+                    price = price_match.group().split(" ")[1]
+
+                start_match = re.search(r'začátek (\d+:\d+)', detail_description)
+                start = "0"
+                if start_match:
+                    start = start_match.group().split(" ")[1]
+            except:
+                self.logger.error("Failed to get info after clicking tournament detail.")
+                continue
+                
+            level = self.get_level_by_name(tournament_name)
+            organizer = "Ondřej Michálek"
+            last_update = datetime.now()
+            self.tournament_set.add(
+                TournamentInfo(tournament_name,tournament_date,tournament_city,tournament_areal,capacity,signed,price,start,organizer,category,level,url,last_update)
+            )
+            self.driver.quit()
+            self.custom_log_manager.info_message_only('   Data scraped succesfuly!')
+            self.custom_log_manager.info_message_only('')
+            
+        return True
