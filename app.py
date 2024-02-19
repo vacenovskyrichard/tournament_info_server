@@ -119,7 +119,7 @@ def login():
         role = "player"
     else:
         user = User.query.filter_by(email=email).first()
-        role = user.role
+        
 
 
 
@@ -129,9 +129,10 @@ def login():
     if not bcrypt.check_password_hash(user.password, password):
         return jsonify({"error": "Unauthorized"}), 401
 
+    if role != "player":
+        role = user.role
     response = jsonify({"msg": "login successful"})
     accessToken = create_access_token(identity=user.id)
-    
     
     response = {
     "accessToken": accessToken,
