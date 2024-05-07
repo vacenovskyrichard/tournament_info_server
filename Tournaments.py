@@ -383,8 +383,8 @@ class TournamentManagement():
                 capacity = -1
                 signed = int(tournament_info_elements[7].text)
                 price = 0
-                start = "?"
-                organizer = "?"
+                start = "9:00"
+                organizer = "Podrobné informace o čase, ceně a další se nacházejí v propozicích na stránce turnaje."
                 if url < 3:
                     category = "Muži"
                 else:
