@@ -96,7 +96,7 @@ class TournamentManagement():
         return "Open"
 
     def open_chrome_with_url(self, url):
-        testing = True
+        testing = False
         user_agent = "bot:turnajky.cz"
         try:
             if not testing:
