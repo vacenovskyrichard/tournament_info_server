@@ -34,6 +34,7 @@ def add_to_database(tournament):
                 == date(
                     tournament.date.year, tournament.date.month, tournament.date.day
                 ),
+                Tournament.category == tournament.category
             )
         )
         .first()
