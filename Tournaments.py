@@ -58,6 +58,7 @@ class TournamentInfo:
                 isinstance(other, TournamentInfo)
                 and self.name == other.name
                 and self.tournament_date == other.tournament_date
+                and self.category == other.category
         )
 
     def __hash__(self):
